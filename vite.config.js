@@ -15,4 +15,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  optimizeDeps: {
+    exclude: ['minizinc'] // 确保 minizinc 被排除在依赖优化之外
+  },
 })
