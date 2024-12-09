@@ -15,10 +15,11 @@
             @input="addConstraint(index, opIndex)"
             :disabled="!processSolution[index]?.has(opIndex + 1)"
           >
-          <label :for="'process-' + index + '-option-' + opIndex" :class="{ disabled: !processSolution[index]?.has(opIndex + 1) }">{{ option.idName }}: {{ option.name }}</label>
+          <label :for="'process-' + index + '-option-' + opIndex" :class="[{ disabled: !processSolution[index]?.has(opIndex + 1) }, 'ms-2']">{{ option.idName }}: {{ option.name }}</label>
         </div>
       </div>
     </div>
+    <button @click="back" class="btn btn-primary mt-3 text-end">Back</button>
   </div>
 </template>
 
@@ -33,7 +34,8 @@ const solutions = ref([]);
 const processSolution = ref([]);
 
 const choiceConstraints = ref([]);
-const choices = ref([]);
+// const choices = ref([]);
+const choices = ref(Array.from({ length: processes.value.length }, () => null));
 
 const addConstraint = async (index, opIndex) => {
   const constraintTemplate = `constraint(choice[${index + 1}] = ${opIndex + 1});\n`;
@@ -43,6 +45,17 @@ const addConstraint = async (index, opIndex) => {
     setProcessSolution();
   } catch (error) {
     console.error('Error during adding constraint:', error);
+  }
+}
+
+const back = async () => {
+  choices.value.pop();
+  choiceConstraints.value.pop();
+  try {
+    await solveModel();
+    setProcessSolution();
+  } catch (error) {
+    console.error('Error during going back:', error);
   }
 }
 
