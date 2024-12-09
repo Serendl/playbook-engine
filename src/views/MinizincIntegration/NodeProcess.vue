@@ -72,7 +72,7 @@
       <h2>Solutions</h2>
       <div v-if="solutions.length > 0">
         <div v-for="(solution, index) in solutions" :key="index" class="solution">
-          <span class="solution-header">解 {{ index + 1 }}:</span>
+          <span class="solution-header">Solution {{ index + 1 }}:</span>
           <div v-for="(value, key) in solution" :key="key" class="solution-item">
             <strong>{{ key }}:</strong> {{ value }}
           </div>
@@ -101,7 +101,7 @@ const createModel = () => {
   // model.addFile('model.mzn', completemodel.value);
 }
 
-// 点击按钮时执行求解
+// click the solve button to solve the model
 const solveModel = async () => {
   const model = new MiniZinc.Model();
   model.addFile('model.mzn', completemodel.value);
@@ -118,10 +118,10 @@ const solveModel = async () => {
       },
     });
 
-    // 清空之前的结果
-    // solutions.value = [];
+    // clear the previous results
+    solutions.value = [];
 
-    // 解析解决方案
+    // parse the solutions
     solve.on('solution', solution => {
       console.log(solution.output.json);
       solutions.value.push(solution.output.json);
@@ -130,9 +130,6 @@ const solveModel = async () => {
     solve.then(result => {
       console.log(result.status);
     });
-
-    // 监听求解结束的状态
-    console.log(solve.status);
 
   } catch (error) {
     console.error('Error during solving:', error);
