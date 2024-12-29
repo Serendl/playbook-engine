@@ -6,15 +6,22 @@
         <div class="name-row">
           <h3>Process {{ process.id }}: {{ process.name }}</h3>
         </div>
-        <div v-for="(option, opIndex) in process.options" :key="opIndex">
-          <input
+        <div v-for="(option, opIndex) in process.options" :key="opIndex" class="d-flex items-center gap-2" style="align-items: center;">
+          <!-- <input
             type="radio"
             :id="'process-' + index + '-option-' + opIndex" :name="'process-' + index"
             :value="opIndex"
             v-model="choices[index]"
             @input="addConstraint(index, opIndex)"
             :disabled="!processSolution[index]?.has(opIndex + 1)"
-          >
+          > -->
+          <RadioButton
+            :input-id="'process-' + index + '-option-' + opIndex" :name="'process-' + index"
+            :value="opIndex"
+            v-model="choices[index]"
+            @input="addConstraint(index, opIndex)"
+            :disabled="!processSolution[index]?.has(opIndex + 1)"
+          />
           <label :for="'process-' + index + '-option-' + opIndex" :class="[{ disabled: !processSolution[index]?.has(opIndex + 1) }, 'ms-2']">{{ option.idName }}: {{ option.name }}</label>
         </div>
       </div>
@@ -26,6 +33,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import * as MiniZinc from 'minizinc';
+import RadioButton from 'primevue/radiobutton';
 
 const completeData = ref('');
 let modelString = '';
@@ -164,7 +172,7 @@ onMounted(() =>{
   display: flex;
   flex-direction: column; /* align items in a column */
   justify-content: space-between;
-  width: 200px; /* width of the card */
+  width: 300px; /* width of the card */
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 8px;

@@ -7,6 +7,8 @@ import NodeProcessView from '@/views/MinizincIntegration/NodeProcess.vue'
 import PGView from '@/views/PGView.vue'
 import ProDeclareView from '@/views/NodeNet/ProDeclareView.vue'
 import ProTestView from '@/views/NodeNet/ProTestView.vue'
+import ProDefineView from '@/views/Configuration/ProDefineView.vue'
+import ProTest1View from '@/views/Configuration/ProTest1View.vue'
 
 const routes = [
   {
@@ -48,6 +50,16 @@ const routes = [
     path: '/proTest',
     name: 'proTest',
     component: ProTestView
+  },
+  {
+    path: '/proTest1',
+    name: 'proTest1',
+    component: ProTest1View
+  },
+  {
+    path: '/proDefine',
+    name: 'proDefine',
+    component: ProDefineView
   }
 ]
 
