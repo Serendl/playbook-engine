@@ -247,29 +247,46 @@
             placeholder="Complete Model"></textarea>
         </div>
       </div>
+
       <!-- Solutions -->
       <div class="data-container mb-3">
         <h2>Solutions</h2>
         <div v-if="solutions.length > 0">
-          <div v-for="(solution, index) in solutions" :key="index" class="solution">
+          <!-- <div v-for="(solution, index) in solutions" :key="index" class="solution">
             <span class="solution-header">Solution {{ index + 1 }}:</span>
             <div v-for="(value, key) in solution" :key="key" class="solution-item">
               <strong>{{ key }}:</strong> {{ value }}
             </div>
-          </div>
+          </div> -->
+          <DataTable :value="tableData" tableStyle="min-width: 50rem">
+            <!-- ID -->
+            <Column field="id" header="Solution ID"></Column>
+            <!-- Generate rows dynamically -->
+            <Column
+              v-for="col in columns"
+              :key="col.field"
+              :field="col.field"
+              :header="col.header"
+            ></Column>
+          </DataTable>
         </div>
         <div v-else>
           <p>No Solutions Found.</p>
         </div>
       </div>
 
+
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import * as MiniZinc from 'minizinc';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+
 
 // List of processes
 const processes = ref([]);
@@ -699,6 +716,28 @@ const importModel = (event) => {
     reader.readAsText(file);
   }
 };
+
+// generate headers for the data table
+const columns = computed(() =>
+  processes.value.map((proc) => ({
+    field: proc.name.toLowerCase(),
+    header: proc.name,
+  }))
+);
+
+// generate table data for the data table
+const tableData = computed(() =>
+  solutions.value.map((sol, index) => {
+    const row = { id: index + 1 }; // row Id
+    sol.start.forEach((value, idx) => {
+      const processName = processes.value[idx]?.name.toLowerCase(); // get the process name
+      if (processName) {
+        row[processName] = value; // add the process value to the row
+      }
+    });
+    return row;
+  })
+);
 
 </script>
 
