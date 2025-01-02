@@ -25,6 +25,7 @@
               :name="'option-' + index"
               :value="proIndex"
               v-model="choices[index]"
+              @change="updateLastChoice(index, proIndex)"
             />
             <label :for="'option-' + index + '-property-' + proIndex" class="ms-2">{{ property.idName }}: {{ property.name }}</label>
           </div>
@@ -48,20 +49,41 @@ const solutions = ref([]);
 
 // const optionSolution = ref([]);
 
+// String of choice constraint
 const choiceConstraint = 'set of Property: been_chosen;\n' + 'constraint forall(p in been_chosen) (chosen[p]);\n';
-const choiceConstraintData = ref([]);
+
+// String of choice data
 const choiceData = ref('');
 
+// array to store the choices
 const choices = ref([]);
 
-const choieceArrayCreate = () => {
-  options.value.forEach((option, i) => {
-    choices.value[i] = [];
-  });
+// record the last choice
+const lastChoice = ref({
+  option: 0,
+  property: 0,
+});
+
+// current support solution
+const supportSolution = ref([]);
+
+// minizinc status
+const resultStatus = ref('ALL_SOLUTIONS');
+
+const choiceArrayCreate = () => {
+  for (let i = 0; i < options.value.length; i++) {
+    choices.value.push([]);
+  }
+};
+
+const updateLastChoice = async (option, property) => {
+  lastChoice.value.option = option;
+  lastChoice.value.property = property;
 }
 
+// add Constraint for the choices
 const addConstraint = async () => {
-  choiceConstraintData.value = [];
+  let choiceConstraintData = [];
   choices.value.forEach((choiceArray, i) => {
     let ccData = '';
     choiceArray.forEach((choice, j) => {
@@ -71,12 +93,12 @@ const addConstraint = async () => {
         ccData += `Option${i + 1}(${Number(choice) + 1})`;
       }
     })
-    choiceConstraintData.value.push(ccData);
+    choiceConstraintData.push(ccData);
   })
 
   choiceData.value = 'been_chosen = {';
-  choiceConstraintData.value.forEach((ccData, i) => {
-    if (i < choiceConstraintData.value.length - 1 && ccData !== '') {
+  choiceConstraintData.forEach((ccData, i) => {
+    if (i < choiceConstraintData.length - 1 && ccData !== '') {
       choiceData.value += ccData + ', ';
     } else {
       choiceData.value += ccData;
@@ -87,28 +109,78 @@ const addConstraint = async () => {
 
   try {
     await solveModel();
-    // setOptionSolution();
+    checkResultStatus();
   } catch (error) {
     console.error('Error during adding constraint:', error);
   }
 }
 
+// listen to the choices change
 watch(
   choices.value,
   () => {
-    addConstraint()
+    supportSolutionCheck();
   },
 );
 
+// clean the last choice array
 const back = async () => {
   choices.value.pop();
-  choiceConstraintData.value.pop();
   try {
     await solveModel();
     // setOptionSolution();
   } catch (error) {
     console.error('Error during going back:', error);
   }
+}
+
+// check minizinc result status
+const checkResultStatus = () => {
+  if (resultStatus.value === 'SATISFIED' || resultStatus.value === 'ALL_SOLUTIONS') {
+    setSupportSolution();
+  } else if (resultStatus.value === 'UNSATISFIABLE' || resultStatus.value === 'NO_SOLUTION') {
+    console.log('Unsatisfied');
+    noSolution();
+  }
+}
+
+//
+const noSolution = async () => {
+  await updateLastChoice(lastChoice.value.option, lastChoice.value.property);
+  if (choices.value[lastChoice.value.option].length > options.value[lastChoice.value.option].choiceNum) {
+    alert(`You can only choose ${options.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
+  } else {
+    let dependencyAlert = '';
+    let pathAlert = '';
+    alert('This property cannot coexist with your previous selection. Please try othters.');
+    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.length > 0) {
+      dependencyAlert = 'For this property, you need to choose:\n';
+      options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.forEach(dependency => {
+        dependencyAlert += `Option${dependency.option}: ${dependency.propertyText} `;
+        if (dependency !== options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.slice(-1)[0]) {
+          dependencyAlert += 'or\n';
+        }
+      })
+      alert(dependencyAlert);
+    }
+    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.length > 0){
+      pathAlert = 'For this property, you can choose:\n';
+      options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.forEach(path => {
+        pathAlert += `Path ${path.name}: `;
+        path.dependencies.forEach((dep) => {
+          pathAlert += `Option${dep.option}(${dep.propertyText}) `;
+          // if (path.dependencies.indexOf(dep) === path.dependencies.length - 1) {
+          //   pathAlert += '\n';
+          // }
+        })
+        if (path !== options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.slice(-1)[0]) {
+          pathAlert += ';\n';
+        }
+      })
+      alert(dependencyAlert + pathAlert);
+    }
+  }
+  choices.value[lastChoice.value.option].splice(-1, 1);
 }
 
 // const setOptionSolution = () => {
@@ -127,6 +199,46 @@ const back = async () => {
 //     optionSolution.value.push(optSet);
 //   }
 // }
+
+// set the support solution as the one with the most properties
+const setSupportSolution = () => {
+  if (solutions.value.length === 0) {
+    return;
+  }
+  let sizeNum = 0;
+  let supportIndex = 0;
+  solutions.value.forEach(solution => {
+    if(solution.chosen_prop.set.length > sizeNum) {
+      sizeNum = solution.chosen_prop.set.length;
+      supportIndex = solutions.value.indexOf(solution);
+    }
+  });
+  supportSolution.value = solutions.value[supportIndex];
+}
+
+
+const supportSolutionCheck = async () => {
+  for (let i = 0; i < choices.value.length; i++) {
+    const choiceArray = choices.value[i];
+    for (let j = 0; j < choiceArray.length; j++) {
+      const choice = choiceArray[j];
+      let existMark = false; // Mark the property is not found in support solution
+
+      for (let k = 0; k < supportSolution.value.chosen_prop.set.length; k++) {
+        const solution = supportSolution.value.chosen_prop.set[k];
+        if (solution.c === 'Option' + (i + 1) && solution.e === Number(choice) + 1) {
+          existMark = true; // property is found in support solution
+          break; // exit the loop
+        }
+      }
+
+      if (!existMark) {
+        // if the property not in the support solution, add the constraint and return
+        await addConstraint();
+      }
+    }
+  }
+};
 
 // click the solve button to solve the model
 const solveModel = async () => {
@@ -161,6 +273,7 @@ const solveModel = async () => {
       solve.then(result => {
         console.log('Solve Status:', result.status);
         resolve(); // mark as success
+        resultStatus.value = result.status;
       });
 
       // listen to the solve error
@@ -199,7 +312,8 @@ onMounted(() =>{
   };
 
   // setOptionSolution();
-  choieceArrayCreate();
+  choiceArrayCreate();
+  setSupportSolution();
 })
 
 
