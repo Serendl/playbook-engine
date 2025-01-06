@@ -1,4 +1,5 @@
 <template>
+  <contextHolder />
   <div class="process-container">
     <h1>Process Selection</h1>
     <div class="process-list">
@@ -6,19 +7,6 @@
         <div class="name-row">
           <h3>Option {{ option.id }}: {{ option.name }}</h3>
         </div>
-        <!-- Single Choice -->
-        <!-- <div v-if="option.choiceNum = 1">
-          <div v-for="(property, proIndex) in option.properties" :key="proIndex" class="d-flex items-center gap-2" style="align-items: center;">
-            <RadioButton
-              :input-id="'option-' + index + '-property-' + proIndex" :name="'option-' + index"
-              :value="proIndex"
-              v-model="choices[index]"
-            />
-            <label :for="'option-' + index + '-property-' + proIndex" :class="[{ disabled: !optionSolution[index]?.has(proIndex + 1) }, 'ms-2']">{{ property.idName }}: {{ property.name }}</label>
-          </div>
-        </div> -->
-        <!-- Multi Choice -->
-        <!-- <div v-else-if="option.choiceNum > 1"> -->
           <div v-for="(property, proIndex) in option.properties" :key="proIndex" class="d-flex items-center gap-2" style="align-items: center;">
             <Checkbox
               :input-id="'option-' + index + '-property-' + proIndex"
@@ -41,6 +29,8 @@ import { onMounted, ref, watch } from 'vue';
 import * as MiniZinc from 'minizinc';
 // import RadioButton from 'primevue/radiobutton';
 import Checkbox from 'primevue/checkbox';
+import { message } from 'ant-design-vue';
+const [messageApi, contextHolder] = message.useMessage();
 
 const completeData = ref('');
 let modelString = '';
@@ -148,57 +138,27 @@ const checkResultStatus = () => {
 const noSolution = async () => {
   await updateLastChoice(lastChoice.value.option, lastChoice.value.property);
   if (choices.value[lastChoice.value.option].length > options.value[lastChoice.value.option].choiceNum) {
-    alert(`You can only choose ${options.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
+    messageApi.info(`You can only choose ${options.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
   } else {
     let dependencyAlert = '';
-    let pathAlert = '';
-    alert('This property cannot coexist with your previous selection. Please try othters.');
-    // if (options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.length > 0) {
-    //   dependencyAlert = 'For this property, you need to choose:\n';
-    //   options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.forEach(dependency => {
-    //     dependencyAlert += `Option${dependency.option}: ${dependency.propertyText} `;
-    //     if (dependency !== options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.slice(-1)[0]) {
-    //       dependencyAlert += 'or\n';
-    //     }
-    //   })
-    //   alert(dependencyAlert);
-    // }
-    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.length > 0){
-      pathAlert = 'For this property, you can choose:\n';
-      options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.forEach(path => {
-        pathAlert += `Path ${path.name}: `;
-        path.dependencies.forEach((dep) => {
-          pathAlert += `Option${dep.option}(${dep.propertyText}) `;
-          // if (path.dependencies.indexOf(dep) === path.dependencies.length - 1) {
-          //   pathAlert += '\n';
-          // }
+    let depListAlert = '';
+    messageApi.info('This property cannot coexist with your previous selection. Please try others.');
+    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.length > 0){
+      depListAlert = 'For this property, you can choose:\n';
+      options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.forEach(depList => {
+        depListAlert += `Dependency List: ${depList.name}: `;
+        depList.dependencies.forEach((dep) => {
+          depListAlert += `Option${dep.option}(${dep.propertyText}) `;
         })
-        if (path !== options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.slice(-1)[0]) {
-          pathAlert += ';\n';
+        if (depList !== options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.slice(-1)[0]) {
+          depListAlert += ';\n';
         }
       })
-      alert(dependencyAlert + pathAlert);
+      messageApi.info(dependencyAlert + depListAlert);
     }
   }
   choices.value[lastChoice.value.option].splice(-1, 1);
 }
-
-// const setOptionSolution = () => {
-//   const optionsLength = options.value.length;
-//   let solutionArray = solutions.value.flatMap(solution => solution.chosen_prop.set);
-//   optionSolution.value = [];
-
-//   for (let i = 0; i < optionsLength; i++) {
-//     const optSet = new Set();
-//     solutionArray.forEach(solution => {
-//       if (solution.c === 'Option' + (i + 1)) {
-//         optSet.add(solution.e);
-//       }
-//     });
-//     // console.log(optSet);
-//     optionSolution.value.push(optSet);
-//   }
-// }
 
 // set the support solution as the one with the most properties
 const setSupportSolution = () => {

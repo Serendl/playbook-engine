@@ -45,49 +45,36 @@
                 <input v-model="property.name" placeholder="Property Name" class="form-control attribute-input ms-2" />
               </div>
               <div>
-                <button @click="addPath(index, proIndex)">Add Path</button>
-                <button @click="addDependency(index, proIndex)" class="ms-2">Add Dependency</button>
+                <button @click="addDepList(index, proIndex)">Add Dependency List</button>
                 <button @click="deleteProperty(index, proIndex)" class="delete-btn ms-2">🗑️</button>
               </div>
             </div>
 
-            <!-- <div v-if="property.dependenciesArray.length > 0"> -->
-              <!-- <hr style="border: none; border-top: 1px dashed #999;" /> -->
-              <!-- <label>Dependencies not from last process:</label> -->
-            <!-- </div> -->
-            <div v-if="property.dependenciesArray.length > 0">
-              <hr style="border: none; border-top: 1px dashed #999;" />
-              <label>Dependencies:</label>
-              <div v-for="(dependency, depIndex) in property.dependenciesArray" :key="depIndex" class="mt-2">
-                <div class="name-delete">
-                  <div class="dependency-row">
-                    <label>Option:</label>
-                    <input id="dependency option" v-model="dependency.option" placeholder="Option ID" class="form-control attribute-input ms-2" />
-                    <label>Property:</label>
-                    <input id="dependency property" v-model="dependency.propertyText" placeholder="Property" @input="updateDepProperty(dependency)" class="form-control attribute-input ms-2" />
-                  </div>
-                  <button @click="deleteProDependency(index, proIndex, depIndex)" class="delete-btn ms-2">🗑️</button>
-                </div>
-              </div>
-            </div>
-
-            <div v-for="(path, pathIndex) in property.paths" :key="pathIndex" class="mt-2">
+            <div v-for="(depList, depListIndex) in property.depLists" :key="depListIndex" class="mt-2">
               <hr style="border: none; border-top: 1px dashed #999;" />
               <div class="name-delete">
                 <div class="dependency-row">
-                  <label>Path ID: {{ path.id }}</label>
-                  <label>Path Name: {{ path.name }}</label>
-                  <input id="dependency option" v-model="path.name" placeholder="Option ID" class="form-control attribute-input ms-2" />
+                  <label>Dependency List ID: {{ depList.id }}</label>
+                  <label>Dependency List Name: </label>
+                  <input id="dependency option" v-model="depList.name" placeholder="Option Name" class="form-control attribute-input ms-2" />
                 </div>
-                <button @click="deletePath(index, proIndex, pathIndex)" class="delete-btn ms-2">🗑️</button>
+                <div>
+                  <button @click="addDependency(index, proIndex, depListIndex)" class="ms-2">Add Dependency</button>
+                  <button @click="deleteDepList(index, proIndex, depListIndex)" class="delete-btn ms-2">🗑️</button>
+                </div>
+
               </div>
-              <div v-for="(pathDep, pathDepIndex) in path.dependencies" :key="pathDepIndex" class="mt-2">
-                <div class="dependency-row">
-                  <label>Option:</label>
-                  <input id="dependency option" v-model="pathDep.option" placeholder="Option ID" class="form-control attribute-input ms-2" />
-                  <label>Property:</label>
-                  <input id="dependency property" v-model="pathDep.propertyText" placeholder="Property" @input="updateDepProperty(pathDep)" class="form-control attribute-input ms-2" />
+              <div v-for="(listDep, listDepIndex) in depList.dependencies" :key="listDepIndex" class="mt-2">
+                <div class="name-delete">
+                  <div class="dependency-row">
+                    <label>Option:</label>
+                    <input id="dependency option" v-model="listDep.option" placeholder="Option ID" class="form-control attribute-input ms-2" />
+                    <label>Property:</label>
+                    <input id="dependency property" v-model="listDep.propertyText" placeholder="Property" @input="updateDepProperty(listDep)" class="form-control attribute-input ms-2" />
+                  </div>
+                  <button @click="deleteDep(index, proIndex, depListIndex, listDepIndex)" class="delete-btn ms-2">🗑️</button>
                 </div>
+
               </div>
             </div>
           </div>
@@ -110,9 +97,6 @@ import * as MiniZinc from 'minizinc';
 
 // List of processes
 const options = ref([]);
-
-// List of special path
-// const paths = ref([]);
 
 // const completeData = ref('');
 
@@ -160,36 +144,19 @@ const dsReplenish = () => {
   let depTemplate = 'dependencies = [';
   options.value.forEach((option, optIndex) => {
     option.properties.forEach((property, proIndex) => {
-      if (property.dependenciesArray.length > 0) {
-        property.dependenciesArray.forEach((dependency, depIndex) => {
+      if (property.depLists.length > 0) {
+        property.depLists.forEach((depList, depListIndex) => {
           let depDeclare = `(p: Option${optIndex + 1}(${proIndex + 1}), req: [`;
-          dependency.propertyArray.forEach((prop, propIndex) => {
-            if (propIndex != dependency.propertyArray.length - 1) {
-              depDeclare += `Option${dependency.option}(${prop}), `;
-            } else {
-              depDeclare += `Option${dependency.option}(${prop})])`;
-            }
-          });
-          if (optIndex == options.value.length - 1 && proIndex == option.properties.length - 1 && depIndex == property.dependenciesArray.length - 1) {
-            depTemplate += depDeclare;
-          } else {
-            depTemplate += depDeclare + ', \n';
-          }
-        });
-      }
-      if (property.paths.length > 0) {
-        property.paths.forEach((path, pathIndex) => {
-          let depDeclare = `(p: Option${optIndex + 1}(${proIndex + 1}), req: [`;
-          path.dependencies.forEach((pathDep, pathDepIndex) => {
-            pathDep.propertyArray.forEach((prop, propIndex) => {
-              if (propIndex != pathDep.propertyArray.length - 1 || pathDepIndex != path.dependencies.length - 1) {
-                depDeclare += `Option${pathDep.option}(${prop}), `;
+          depList.dependencies.forEach((listDep, listDepIndex) => {
+            listDep.propertyArray.forEach((prop, propIndex) => {
+              if (propIndex != listDep.propertyArray.length - 1 || listDepIndex != depList.dependencies.length - 1) {
+                depDeclare += `Option${listDep.option}(${prop}), `;
               } else {
-                depDeclare += `Option${pathDep.option}(${prop})])`;
+                depDeclare += `Option${listDep.option}(${prop})])`;
               }
             });
           });
-          if (optIndex == options.value.length - 1 && proIndex == option.properties.length - 1 && pathIndex == property.paths.length - 1) {
+          if (optIndex == options.value.length - 1 && proIndex == option.properties.length - 1 && depListIndex == property.depLists.length - 1) {
               depTemplate += depDeclare;
             } else {
               depTemplate += depDeclare + ', \n';
@@ -239,7 +206,7 @@ const deleteOption = (index) => {
   options.value.splice(index, 1);
 };
 
-// Function to add an attribute to all processes
+// Function to add property
 const addProperty = (index) => {
   const propNum = parseInt(options.value[index].propertyNum);
 
@@ -254,25 +221,22 @@ const addProperty = (index) => {
         id: options.value[index].properties.length + 1,
         idName: String.fromCharCode(65 + options.value[index].properties.length),
         name: '',
-        availabePropertiesText: '',
-        availabePropertiesArray: [],
-        dependenciesArray: [],
-        paths: [],
+        depLists: [],
       };
       options.value[index].properties.push(property);
     }
   }
 };
 
-// Function to add extra dependency to the process
-const addDependency = (optionIndex, proIndex) => {
+// Function to add a new dependency to a depList
+const addDependency = (optIndex, propIndex, depListIndex) => {
   const dependency = {
-    id: options.value[optionIndex].properties[proIndex].dependenciesArray.length + 1,
     option: '',
     propertyText: '',
-    propertyArray: [],
+    propertyArray: []
   };
-  options.value[optionIndex].properties[proIndex].dependenciesArray.push(dependency);
+
+  options.value[optIndex].properties[propIndex].depLists[depListIndex].dependencies.push(dependency);
 };
 
 const updateDepProperty = (dependency) => {
@@ -293,30 +257,28 @@ const deleteProperty = (optIndex, proIndex) => {
   options.value[optIndex].properties.splice(proIndex, 1);
 };
 
-const deleteProDependency = (optionIndex, proIndex, depIndex) => {
-  options.value[optionIndex].properties[proIndex].dependenciesArray.splice(depIndex, 1);
+const deleteDep = (optIndex, proIndex, depListIndex, listDepIndex) => {
+  options.value[optIndex].properties[proIndex].depLists[depListIndex].dependencies.splice(listDepIndex, 1);
 };
 
-const addPath = (optIndex, propIndex) => {
-  const newPath = {
-    id: options.value[optIndex].properties[propIndex].paths.length + 1, // Automatically generated unique ID
+const addDepList = (optIndex, propIndex) => {
+  const newdepList = {
+    id: options.value[optIndex].properties[propIndex].depLists.length + 1, // Automatically generated unique ID
     name: '',
     dependencies: []
   };
-  options.value.forEach((options, opindex) => {
-    if (optIndex != opindex) {
-      newPath.dependencies.push({
-        option: opindex + 1,
-        propertyText: '',
-        propertyArray: [],
-      });
-    }
+
+  newdepList.dependencies.push({
+    option: '',
+    propertyText: '',
+    propertyArray: [],
   });
-  options.value[optIndex].properties[propIndex].paths.push(newPath);
+
+  options.value[optIndex].properties[propIndex].depLists.push(newdepList);
 }
 
-const deletePath = (optIndex, propIndex, pathIndex) => {
-  options.value[optIndex].properties[propIndex].paths.splice(pathIndex, 1);
+const deleteDepList = (optIndex, propIndex, depListIndex) => {
+  options.value[optIndex].properties[propIndex].depLists.splice(depListIndex, 1);
 };
 
 const saveProcess = async() => {
@@ -334,7 +296,7 @@ const saveProcess = async() => {
   sessionStorage.setItem('completeData', dataString);
   sessionStorage.setItem('modelString', modelString);
   sessionStorage.setItem('options', JSON.stringify(options.value));
-  router.push('/ProTest1');
+  router.push('/ProTest2');
   console.log(1);
 };
 
@@ -377,9 +339,9 @@ const importModel = (event) => {
 
           options.value.forEach(option => {
             option.properties.forEach(property => {
-              property.paths.forEach(path => {
-                path.dependencies.forEach(pathDep => {
-                  updateDepProperty(pathDep);
+              property.depLists.forEach(depList => {
+                depList.dependencies.forEach(listDep => {
+                  updateDepProperty(listDep);
                 });
               });
             });
