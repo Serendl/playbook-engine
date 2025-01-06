@@ -8,7 +8,9 @@ import PGView from '@/views/PGView.vue'
 import ProDeclareView from '@/views/NodeNet/ProDeclareView.vue'
 import ProTestView from '@/views/NodeNet/ProTestView.vue'
 import ProDefineView from '@/views/Configuration/ProDefineView.vue'
+import ProDefineView1 from '@/views/Configuration/ProDefineView1.vue'
 import ProTest1View from '@/views/Configuration/ProTest1View.vue'
+import ProTest2View from '@/views/Configuration/ProTest2View.vue'
 
 const routes = [
   {
@@ -57,9 +59,19 @@ const routes = [
     component: ProTest1View
   },
   {
+    path: '/proTest2',
+    name: 'proTest2',
+    component: ProTest2View
+  },
+  {
     path: '/proDefine',
     name: 'proDefine',
     component: ProDefineView
+  },
+  {
+    path: '/proDefine1',
+    name: 'proDefine1',
+    component: ProDefineView1
   }
 ]
 
