@@ -11,6 +11,20 @@
         <div class="name-delete">
           <div>
             <button @click="addOption" class="btn btn-primary me-3">Add Option</button>
+            <!-- <button @click="addAttribute" class="btn btn-primary me-3">Add Property Attribute</button> -->
+            <button @click="visible = true" class="btn btn-primary me-3">Add Property Attribute</button>
+            <DialogComp v-model:visible="visible" modal header="Add Attribute" :style="{ width: '25rem' }">
+              <p style="font-size: 1.15em">Please Enter the Attribute Name:</p>
+              <!-- <span class="text-surface-800 dark:text-surface-400 block mb-8">Please Enter the Attribute Name:</span> -->
+              <div class="id-name-row mt-3 mb-3" style="align-items: baseline;">
+                  <label for="attribute name" class="font-semibold w-24 me-2">Attribute Name: </label>
+                  <input v-model="attrName" id="attribute name" class="flex-auto process-name-input form-control" autocomplete="off" />
+              </div>
+              <div class="flex gap-2"  style="display: flex; justify-content: flex-end; max-width: 500px;">
+                  <button type="button" label="Cancel" class="btn btn-primary me-3" @click="visible = false">Cancel</button>
+                  <button type="button" label="Save" class="btn btn-primary me-3" @click="{visible = false; addAttribute()}">Save</button>
+              </div>
+            </DialogComp>
           </div>
           <div>
             <button @click="saveModel" class="btn btn-primary mt-3 text-end">Save Model</button>
@@ -47,6 +61,25 @@
               <div>
                 <button @click="addDepList(index, proIndex)">Add Dependency List</button>
                 <button @click="deleteProperty(index, proIndex)" class="delete-btn ms-2">🗑️</button>
+              </div>
+            </div>
+
+            <div v-if="property.attributes.length > 0">
+              <hr style="border: none; border-top: 1px dashed #999;" />
+              <p>Property Attributes:</p>
+            </div>
+
+            <div v-for="(attribute,attrIndex) in property.attributes" :key="attrIndex" class="mt-2">
+
+              <div class="name-delete">
+                <div class="attribute-row">
+                  <label class="me-2">Attribute Name: {{attribute.name}}</label>
+                  <label>Attribute Value:</label>
+                  <input v-model="attribute.value" placeholder="Attribute Value" class="form-control attribute-input ms-2" />
+                </div>
+                <div>
+                  <button @click="deleteAttr(index, proIndex, attrIndex)" class="delete-btn ms-2">🗑️</button>
+                </div>
               </div>
             </div>
 
@@ -94,6 +127,8 @@ import router from '@/router';
 import { ref } from 'vue';
 import * as MiniZinc from 'minizinc';
 
+const visible = ref(false);
+const attrName = ref('');
 
 // List of processes
 const options = ref([]);
@@ -117,6 +152,10 @@ let modelString = 'enum Property;\n' +
                   '); \n';
 
 let dataString = '';
+
+let attrString = '';
+
+const attributes = ref([]);
 
 const solutions = ref([]);
 
@@ -185,6 +224,30 @@ const dsReplenish = () => {
   });
   cardTemplate += '];\n';
 
+  // cost = [80, 45, 50, 40, 15, 60, 40, 250, 100];
+  if (attributes.value.length > 0) {
+    attributes.value.forEach((attribute, attributeIndex) => {
+      let attrDeclare = `${attribute.name} = [`;
+      options.value.forEach((option, optIndex) => {
+        option.properties.forEach((property, proIndex) => {
+          if(property.attributes.length > 0) {
+            property.attributes.forEach((attr, attrIndex) => {
+              if (attribute.name === attr.name && attributeIndex === attrIndex) {
+                if (optIndex === options.value.length - 1 && proIndex == option.properties.length - 1 && attrIndex == property.attributes.length - 1) {
+                  attrDeclare += `${attr.value}];\n`;
+                } else {
+                  attrDeclare += `${attr.value}, `;
+                }
+              }
+            })
+          }
+        })
+      })
+      attrString += attrDeclare;
+    })
+
+  }
+
   dataString += cardTemplate;
   // console.log(dataString)
 };
@@ -222,6 +285,7 @@ const addProperty = (index) => {
         idName: String.fromCharCode(65 + options.value[index].properties.length),
         name: '',
         depLists: [],
+        attributes: []
       };
       options.value[index].properties.push(property);
     }
@@ -281,6 +345,34 @@ const deleteDepList = (optIndex, propIndex, depListIndex) => {
   options.value[optIndex].properties[propIndex].depLists.splice(depListIndex, 1);
 };
 
+const addAttribute = () => {
+  options.value.forEach(option => {
+    option.properties.forEach(property => {
+      const newAttribute = {
+        name: attrName.value,
+        value: '0',
+      };
+      property.attributes.push(newAttribute);
+    });
+  });
+  const newAttr = {
+    name: attrName.value,
+    type: 'int',
+    index: 0,
+  }
+  attributes.value.push(newAttr);
+  attrName.value = '';
+}
+
+const deleteAttr = (optIndex, proIndex, attrIndex) => {
+  options.value.forEach(option => {
+    option.properties.forEach(property => {
+      property.attributes.splice(attrIndex, 1);
+    });
+  });
+  attributes.value.splice(attrIndex, 1);
+}
+
 const saveProcess = async() => {
   // complete the model string
   dsReplenish();
@@ -295,11 +387,11 @@ const saveProcess = async() => {
 
   sessionStorage.setItem('completeData', dataString);
   sessionStorage.setItem('modelString', modelString);
+  sessionStorage.setItem('attrString', attrString);
   sessionStorage.setItem('options', JSON.stringify(options.value));
   router.push('/ProTest2');
   console.log(1);
 };
-
 
 const saveModel = async() => {
   const process = options.value;

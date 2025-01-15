@@ -17,7 +17,6 @@
             />
             <label :for="'option-' + index + '-property-' + proIndex" class="ms-2">{{ property.idName }}: {{ property.name }}</label>
           </div>
-        <!-- </div> -->
       </div>
     </div>
     <button @click="back" class="btn btn-primary mt-3 text-end">Back</button>
