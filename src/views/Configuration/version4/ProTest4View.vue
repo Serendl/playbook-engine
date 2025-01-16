@@ -16,6 +16,7 @@
                   :value="proIndex"
                   v-model="choices[index]"
                   @change="updateLastChoice(index, proIndex)"
+                  :disabled="!optionSolution[index]?.has(proIndex + 1)"
                 />
                 <label :for="'option-' + index + '-property-' + proIndex" class="ms-2">{{ property.idName }}: {{ property.name }}</label>
               </div>
@@ -109,7 +110,10 @@ const lastChoice = ref({
 });
 
 // current support solution
-const supportSolution = ref([]);
+// const supportSolution = ref([]);
+
+// option solution
+const optionSolution = ref([]);
 
 // custom dataString
 const customDataString = ref('');
@@ -176,7 +180,7 @@ const addConstraint = async () => {
 watch(
   choices.value,
   () => {
-    supportSolutionCheck();
+    addConstraint();
   },
 );
 
@@ -194,7 +198,8 @@ const back = async () => {
 // check minizinc result status
 const checkResultStatus = () => {
   if (resultStatus.value === 'SATISFIED' || resultStatus.value === 'ALL_SOLUTIONS') {
-    setSupportSolution();
+    // setSupportSolution();
+    setOptionSolution();
   } else if (resultStatus.value === 'UNSATISFIABLE' || resultStatus.value === 'NO_SOLUTION') {
     console.log('Unsatisfied');
     noSolution();
@@ -228,45 +233,64 @@ const noSolution = async () => {
 }
 
 // set the support solution as the one with the most properties
-const setSupportSolution = () => {
-  if (solutions.value.length === 0) {
-    return;
-  }
-  let sizeNum = 0;
-  let supportIndex = 0;
-  solutions.value.forEach(solution => {
-    if(solution.chosen_prop.set.length > sizeNum) {
-      sizeNum = solution.chosen_prop.set.length;
-      supportIndex = solutions.value.indexOf(solution);
-    }
-  });
-  supportSolution.value = solutions.value[supportIndex];
-}
+// const setSupportSolution = () => {
+//   if (solutions.value.length === 0) {
+//     return;
+//   }
+//   let sizeNum = 0;
+//   let supportIndex = 0;
+//   solutions.value.forEach(solution => {
+//     if(solution.chosen_prop.set.length > sizeNum) {
+//       sizeNum = solution.chosen_prop.set.length;
+//       supportIndex = solutions.value.indexOf(solution);
+//     }
+//   });
+//   supportSolution.value = solutions.value[supportIndex];
+// }
 
 // NEED IMPROVEMENT
 // solution check for property
-const supportSolutionCheck = async () => {
-  for (let i = 0; i < choices.value.length; i++) {
-    const choiceArray = choices.value[i];
-    for (let j = 0; j < choiceArray.length; j++) {
-      const choice = choiceArray[j];
-      let existMark = false; // Mark the property is not found in support solution
+// const supportSolutionCheck = async () => {
+//   for (let i = 0; i < choices.value.length; i++) {
+//     const choiceArray = choices.value[i];
+//     for (let j = 0; j < choiceArray.length; j++) {
+//       const choice = choiceArray[j];
+//       let existMark = false; // Mark the property is not found in support solution
 
-      for (let k = 0; k < supportSolution.value.chosen_prop.set.length; k++) {
-        const solution = supportSolution.value.chosen_prop.set[k];
-        if (solution.c === 'Option' + (i + 1) && solution.e === Number(choice) + 1) {
-          existMark = true; // property is found in support solution
-          break; // exit the loop
-        }
-      }
+//       for (let k = 0; k < supportSolution.value.chosen_prop.set.length; k++) {
+//         const solution = supportSolution.value.chosen_prop.set[k];
+//         if (solution.c === 'Option' + (i + 1) && solution.e === Number(choice) + 1) {
+//           existMark = true; // property is found in support solution
+//           break; // exit the loop
+//         }
+//       }
 
-      if (!existMark) {
-        // if the property not in the support solution, add the constraint and return
-        await addConstraint();
-      }
-    }
+//       if (!existMark) {
+//         // if the property not in the support solution, add the constraint and return
+//         await addConstraint();
+//       }
+//     }
+//   }
+// };
+
+// set the option solution
+const setOptionSolution = async () => {
+  const optionLength = options.value.length;
+  optionSolution.value = [];
+  console.log(solutions.value);
+
+  for (let i = 0; i < optionLength; i++) {
+    const optSet = new Set();
+    optionSolution.value.push(optSet);
   }
-};
+
+  solutions.value.forEach((solution) => {
+    solution.chosen_prop.set.forEach((prop) => {
+      const optionIndex = prop.c.match(/\d+/)[0];
+      optionSolution.value[optionIndex - 1].add(prop.e);
+    })
+  })
+}
 
 // click the solve button to solve the model
 const solveModel = async () => {
@@ -482,7 +506,7 @@ onMounted(() =>{
 
   // setOptionSolution();
   choiceArrayCreate();
-  setSupportSolution();
+  setOptionSolution();
 })
 
 

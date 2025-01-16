@@ -13,6 +13,8 @@ import ProDefineView2 from '@/views/Configuration/version3/ProDefineView2.vue'
 import ProTest1View from '@/views/Configuration/version1/ProTest1View.vue'
 import ProTest2View from '@/views/Configuration/version2/ProTest2View.vue'
 import ProTest3View from '@/views/Configuration/version3/ProTest3View.vue'
+import ProDefineView3 from '@/views/Configuration/version4/ProDefineView3.vue'
+import ProTest4View from '@/views/Configuration/version4/ProTest4View.vue'
 
 const routes = [
   {
@@ -84,6 +86,16 @@ const routes = [
     path: '/proTest3',
     name: 'proTest3',
     component: ProTest3View
+  },
+  {
+    path: '/proDefine3',
+    name: 'proDefine3',
+    component: ProDefineView3
+  },
+  {
+    path: '/proTest4',
+    name: 'proTest4',
+    component: ProTest4View
   }
 ]
 
