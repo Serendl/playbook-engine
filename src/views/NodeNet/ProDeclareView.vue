@@ -368,7 +368,7 @@ const solveModel = async () => {
       // listen to the solve status
       solve.then(result => {
         console.log('Solve Status:', result.status);
-        resolve(); // 标记完成
+        resolve(); // mark as success
       });
 
       // listen to the solve error

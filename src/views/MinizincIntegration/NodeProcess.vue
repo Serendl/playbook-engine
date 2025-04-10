@@ -78,9 +78,9 @@
           </div>
         </div>
       </div>
-    <div v-else>
-      <p>No Solutions Found.</p>
-    </div>
+      <div v-else>
+        <p>No Solutions Found.</p>
+      </div>
     </div>
   </div>
 </template>

@@ -13,12 +13,21 @@ import ToastService from 'primevue/toastservice';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import Slider from 'primevue/slider';
 
 import AppState from './plugins/appState.js';
 
+// Quill
+// import { QuillEditor } from '@vueup/vue-quill'
+// import '@vueup/vue-quill/dist/vue-quill.snow.css'
+
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
 
 import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
+
+
 
 const app = createApp(App)
 app.use(router)
@@ -43,5 +52,10 @@ app.use(Antd);
 app.component('DialogComp', Dialog);
 app.component('ButtonComp', Button);
 app.component('InputText', InputText);
+app.component('SliderComp', Slider);
+
+// app.component('QuillEditor', QuillEditor);
+app.component('QuillEditor', Quill);
+
 
 app.mount('#app')

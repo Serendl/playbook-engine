@@ -212,19 +212,19 @@
 
       <!-- Solutions -->
       <div class="data-container">
-      <h2>Solutions</h2>
-      <div v-if="solutions.length > 0">
-        <div v-for="(solution, index) in solutions" :key="index" class="solution">
-          <span class="solution-header">Solution {{ index + 1 }}:</span>
-          <div v-for="(value, key) in solution" :key="key" class="solution-item">
-            <strong>{{ key }}:</strong> {{ value }}
+        <h2>Solutions</h2>
+        <div v-if="solutions.length > 0">
+          <div v-for="(solution, index) in solutions" :key="index" class="solution">
+            <span class="solution-header">Solution {{ index + 1 }}:</span>
+            <div v-for="(value, key) in solution" :key="key" class="solution-item">
+              <strong>{{ key }}:</strong> {{ value }}
+            </div>
           </div>
         </div>
+        <div v-else>
+          <p>No Solutions Found.</p>
+        </div>
       </div>
-      <div v-else>
-        <p>No Solutions Found.</p>
-      </div>
-    </div>
     </div>
   </div>
 </template>
@@ -365,7 +365,7 @@ const saveResrouces = () => {
     //   formattedModelRes += formattedAttributeString;
     //   console.log(formattedAttributeString);
     // });
-});
+  });
   console.log(formattedModelRes);
   // data content
   modelData.value += formattedResource;
