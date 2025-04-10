@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
+import HomeView from '@/views/Demo/Creator/HomeView.vue'
 import FileUploadView from '@/views/FileUploadView.vue'
 import ProGenerateView from '@/views/ProGenerateView.vue'
 import ProcessView from '@/views/MinizincIntegration/APIProcessView.vue'
@@ -15,6 +15,12 @@ import ProTest2View from '@/views/Configuration/version2/ProTest2View.vue'
 import ProTest3View from '@/views/Configuration/version3/ProTest3View.vue'
 import ProDefineView3 from '@/views/Configuration/version4/ProDefineView3.vue'
 import ProTest4View from '@/views/Configuration/version4/ProTest4View.vue'
+import ProCreator from '@/views/Demo/Creator/ProCreatorView.vue'
+import ProBPMNView from '@/views/Demo/Creator/ProBPMNView.vue'
+import TextPlaybookView from '@/views/Demo/playbook/TextPlaybookView.vue'
+import DefineAttrView from '@/views/Demo/Creator/DefineAttrView.vue'
+import ConfiguratorView from '@/views/Demo/ConfiguratorView.vue'
+import DefineGatewayView from '@/views/Demo/Creator/DefineGatewayView.vue'
 
 const routes = [
   {
@@ -96,6 +102,36 @@ const routes = [
     path: '/proTest4',
     name: 'proTest4',
     component: ProTest4View
+  },
+  {
+    path: '/proCreator',
+    name: 'proCreator',
+    component: ProCreator
+  },
+  {
+    path: '/proBPMN',
+    name: 'proBPMN',
+    component: ProBPMNView
+  },
+  {
+    path: '/TextPlaybook',
+    name: 'TextPlaybook',
+    component: TextPlaybookView
+  },
+  {
+    path: '/DefineAttr',
+    name: 'DefineAttr',
+    component: DefineAttrView
+  },
+  {
+    path: '/ConfiguratorPlaybook',
+    name: 'ConfiguratorPlaybook',
+    component: ConfiguratorView
+  },
+  {
+    path: '/DefineGateway',
+    name: 'DefineGateway',
+    component: DefineGatewayView
   }
 ]
 

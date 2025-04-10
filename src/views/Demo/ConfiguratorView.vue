@@ -3,22 +3,22 @@
   <div class="page-container">
     <div class="left-container">
       <div class="process-container mb-2">
-        <h1>Process Selection</h1>
+        <h1>Configurator</h1>
         <div class="process-list">
-          <div v-for="(option, index) in options" :key="index" class="process-card d-flex">
+          <div v-for="(process, index) in processes" :key="index" class="process-card d-flex">
             <div class="name-row">
-              <h3>Option {{ option.id }}: {{ option.name }}</h3>
+              <h3>Prcoess {{ index + 1 }}: {{ process.name }}</h3>
             </div>
-              <div v-for="(property, proIndex) in option.properties" :key="proIndex" class="d-flex items-center gap-2" style="align-items: center;">
+              <div v-for="(subProcess, subIndex) in process.subProcessArray" :key="subIndex" class="d-flex items-center gap-2" style="align-items: center;">
                 <Checkbox
-                  :input-id="'option-' + index + '-property-' + proIndex"
+                  :input-id="'option-' + index + '-property-' + subIndex"
                   :name="'option-' + index"
-                  :value="proIndex"
+                  :value="subIndex"
                   v-model="choices[index]"
-                  @change="updateLastChoice(index, proIndex)"
-                  :disabled="!optionSolution[index]?.has(proIndex + 1)"
+                  @change="updateLastChoice(index, subIndex)"
+                  :disabled="!processSolution[index]?.has(subIndex + 1)"
                 />
-                <label :for="'option-' + index + '-property-' + proIndex" class="ms-2">{{ property.idName }}: {{ property.name }}</label>
+                <label :for="'option-' + index + '-property-' + subIndex" class="ms-2">{{ getPrefix(subIndex) }}: {{ subProcess.name }}</label>
               </div>
           </div>
         </div>
@@ -43,7 +43,7 @@
     </div>
 
 
-    <div class="attribute-container">
+    <!-- <div class="attribute-container">
       <h1>Solution Customization</h1>
       <div v-for="(attribute, attrIndex) in attributes" :key="attrIndex" class="process-item">
         <label class="mb-2">Attribute Name: {{ attribute.name }}</label>
@@ -69,10 +69,7 @@
       <div>
         <button @click="applyCustomization()" class="btn btn-primary mt-3">Get Recommended Solutions</button>
       </div>
-    </div>
-    <div>
-
-    </div>
+    </div> -->
   </div>
 
 </template>
@@ -85,14 +82,20 @@ import Checkbox from 'primevue/checkbox';
 import { message } from 'ant-design-vue';
 const [messageApi, contextHolder] = message.useMessage();
 
+// let initialized = false;
+
+const getPrefix = (subIndex) => {
+  return String.fromCharCode(65 + subIndex);
+}
+
 const completeData = ref('');
 const modelString = ref('');
-const options = ref([]);
+const processes = ref([]);
 const solutions = ref([]);
 
 const attributes = ref([]);
 
-// const optionSolution = ref([]);
+const processData = ref([]);
 
 // String of choice constraint
 const choiceConstraint = 'set of Property: been_chosen;\n' + 'constraint forall(p in been_chosen) (chosen[p]);\n';
@@ -113,7 +116,7 @@ const lastChoice = ref({
 // const supportSolution = ref([]);
 
 // option solution
-const optionSolution = ref([]);
+const processSolution = ref([]);
 
 // custom dataString
 const customDataString = ref('');
@@ -131,7 +134,7 @@ const resultStatus = ref('ALL_SOLUTIONS');
 
 // create choice array
 const choiceArrayCreate = () => {
-  for (let i = 0; i < options.value.length; i++) {
+  for (let i = 0; i < processes.value.length; i++) {
     choices.value.push([]);
   }
 };
@@ -176,11 +179,16 @@ const addConstraint = async () => {
   }
 }
 
+let initialized = false;
+
 // listen to the choices change
 watch(
   choices.value,
   () => {
-    addConstraint();
+    if (initialized) {
+      addConstraint();
+      console.log('watch');
+    }
   },
 );
 
@@ -189,7 +197,6 @@ const back = async () => {
   choices.value.pop();
   try {
     await solveModel();
-    // setOptionSolution();
   } catch (error) {
     console.error('Error during going back:', error);
   }
@@ -199,7 +206,7 @@ const back = async () => {
 const checkResultStatus = () => {
   if (resultStatus.value === 'SATISFIED' || resultStatus.value === 'ALL_SOLUTIONS') {
     // setSupportSolution();
-    setOptionSolution();
+    setProcessSolution();
   } else if (resultStatus.value === 'UNSATISFIABLE' || resultStatus.value === 'NO_SOLUTION') {
     console.log('Unsatisfied');
     noSolution();
@@ -209,20 +216,20 @@ const checkResultStatus = () => {
 // promption message for no solution
 const noSolution = async () => {
   await updateLastChoice(lastChoice.value.option, lastChoice.value.property);
-  if (choices.value[lastChoice.value.option].length > options.value[lastChoice.value.option].choiceNum) {
-    messageApi.info(`You can only choose ${options.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
+  if (choices.value[lastChoice.value.option].length > processes.value[lastChoice.value.option].choiceNum) {
+    messageApi.info(`You can only choose ${processes.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
   } else {
     let dependencyAlert = '';
     let depListAlert = '';
     messageApi.info('This property cannot coexist with your previous selection. Please try others.');
-    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.length > 0){
+    if (processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.length > 0){
       depListAlert = 'For this property, you can choose:\n';
-      options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.forEach(depList => {
+      processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.forEach(depList => {
         depListAlert += `Dependency List: ${depList.name}: `;
         depList.dependencies.forEach((dep) => {
           depListAlert += `Option${dep.option}(${dep.propertyText}) `;
         })
-        if (depList !== options.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.slice(-1)[0]) {
+        if (depList !== processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.slice(-1)[0]) {
           depListAlert += ';\n';
         }
       })
@@ -232,64 +239,24 @@ const noSolution = async () => {
   choices.value[lastChoice.value.option].splice(-1, 1);
 }
 
-// set the support solution as the one with the most properties
-// const setSupportSolution = () => {
-//   if (solutions.value.length === 0) {
-//     return;
-//   }
-//   let sizeNum = 0;
-//   let supportIndex = 0;
-//   solutions.value.forEach(solution => {
-//     if(solution.chosen_prop.set.length > sizeNum) {
-//       sizeNum = solution.chosen_prop.set.length;
-//       supportIndex = solutions.value.indexOf(solution);
-//     }
-//   });
-//   supportSolution.value = solutions.value[supportIndex];
-// }
-
-// NEED IMPROVEMENT
-// solution check for property
-// const supportSolutionCheck = async () => {
-//   for (let i = 0; i < choices.value.length; i++) {
-//     const choiceArray = choices.value[i];
-//     for (let j = 0; j < choiceArray.length; j++) {
-//       const choice = choiceArray[j];
-//       let existMark = false; // Mark the property is not found in support solution
-
-//       for (let k = 0; k < supportSolution.value.chosen_prop.set.length; k++) {
-//         const solution = supportSolution.value.chosen_prop.set[k];
-//         if (solution.c === 'Option' + (i + 1) && solution.e === Number(choice) + 1) {
-//           existMark = true; // property is found in support solution
-//           break; // exit the loop
-//         }
-//       }
-
-//       if (!existMark) {
-//         // if the property not in the support solution, add the constraint and return
-//         await addConstraint();
-//       }
-//     }
-//   }
-// };
-
 // set the option solution
-const setOptionSolution = async () => {
-  const optionLength = options.value.length;
-  optionSolution.value = [];
+const setProcessSolution = async () => {
+  const optionLength = processes.value.length;
+  processSolution.value = [];
   console.log(solutions.value);
 
   for (let i = 0; i < optionLength; i++) {
     const optSet = new Set();
-    optionSolution.value.push(optSet);
+    processSolution.value.push(optSet);
   }
 
   solutions.value.forEach((solution) => {
     solution.chosen_prop.set.forEach((prop) => {
       const optionIndex = prop.c.match(/\d+/)[0];
-      optionSolution.value[optionIndex - 1].add(prop.e);
+      processSolution.value[optionIndex - 1].add(prop.e);
     })
   })
+  console.log('setPS', processSolution.value);
 }
 
 // click the solve button to solve the model
@@ -299,6 +266,10 @@ const solveModel = async () => {
   model.addString(completeData.value);
   model.addString(choiceConstraint);
   model.addString(choiceData.value);
+
+  let complete = modelString.value + completeData.value + customDataString.value + customConstraintString.value;
+  sessionStorage.setItem('completeModel', complete);
+
   if (!model) {
     console.error('Model is not loaded yet.');
     return;
@@ -326,6 +297,7 @@ const solveModel = async () => {
         console.log('Solve Status:', result.status);
         resolve(); // mark as success
         resultStatus.value = result.status;
+        console.log(solutions.value.length);
       });
 
       // listen to the solve error
@@ -364,6 +336,7 @@ const applyCustomization = async () => {
   }
 
   customSolutionFilter();
+  initialized = true;
 }
 
 // custom solutions filter
@@ -373,7 +346,6 @@ const customSolutionFilter = () => {
   let attrMin = [];
   let disArray = [];
 
-  // set the baseline array (ideal value of the attribute)
   attributes.value.forEach((attribute) =>{
     if (attribute.operation === 'maximize') {
       baselineArray.push(1);
@@ -384,7 +356,6 @@ const customSolutionFilter = () => {
     }
 
     let attrName = `Total${attribute.name}`;
-    // get the max and min value of the attribute from the custom solutions
     attrMax.push(Math.max(...customSolutions.value.map(solution => solution[attrName])));
     attrMin.push(Math.min(...customSolutions.value.map(solution => solution[attrName])));
   })
@@ -419,20 +390,14 @@ const customSolutionFilter = () => {
   console.log(minIndexes);
   console.log(minValues);
 
-  recommendedSolutions.value = filterArray.map(item => customSolutions.value[item.index]);
-
+  recommendedSolutions.value = customSolutions.value.filter((solution, index) => minIndexes.includes(index));
 
 }
 
 const distance = (attrValue, minValue, maxValue, attrIndex, baseLine) => {
-  const rawValue = (attrValue - minValue) / (maxValue - minValue) - baseLine;
-  const squareValue = rawValue ** 2;
-  const dis = (squareValue * attrIndex).toFixed(3);
-  console.log(attrValue, minValue, maxValue, baseLine, rawValue, squareValue, dis);
+  const squareValue = ((attrValue - minValue) / (maxValue - minValue) - baseLine).toFixed(3);
+  const dis = (squareValue * squareValue * attrIndex).toFixed(3);
   return dis;
-  // const squareValue = ((attrValue - minValue) / (maxValue - minValue) - baseLine).toFixed(3);
-  // const dis = (squareValue * squareValue * attrIndex).toFixed(3);
-  // return dis;
 }
 
 // click the solve button to solve the model
@@ -485,15 +450,20 @@ const solveCustomModel = async () => {
 };
 
 // load data
-onMounted(() =>{
-  const optionsStorage = JSON.parse(sessionStorage.getItem('options'));
+onMounted(async() =>{
+  const processDataStorage = sessionStorage.getItem('processData');
+  const processesStorage = JSON.parse(sessionStorage.getItem('processes'));
   const completeDataStorage = sessionStorage.getItem('completeData');
   const solutionsStorage = JSON.parse(sessionStorage.getItem('allSolutions'));
   const modelStringStorage = sessionStorage.getItem('modelString');
   const attributesStorage = JSON.parse(sessionStorage.getItem('attributes'));
 
-  if (optionsStorage) {
-    options.value = optionsStorage;
+  if (processDataStorage) {
+    processData.value = processDataStorage;
+  };
+
+  if (processesStorage) {
+    processes.value = processesStorage;
   };
 
   if (completeDataStorage) {
@@ -512,9 +482,10 @@ onMounted(() =>{
     attributes.value = attributesStorage;
   };
 
-  // setOptionSolution();
   choiceArrayCreate();
-  setOptionSolution();
+  setProcessSolution();
+  // await nextTick();
+  initialized = true;
 })
 
 
@@ -533,7 +504,7 @@ onMounted(() =>{
 .left-container {
   display: flex;
   flex-direction: column;
-  width: 75%;
+  width: 100%;
   height: 100%;
   border-radius: 10px;
   margin: 20px
@@ -595,17 +566,17 @@ onMounted(() =>{
 }
 
 .props-container {
-  display: flex; /* 使内容横向排列 */
-  flex-wrap: wrap; /* 如果内容太长，可以换行 */
-  gap: 1rem; /* 设置子元素之间的间距 */
+  display: flex;
+  flex-wrap: wrap; /* if there is too much content, allow line change */
+  gap: 1rem; /* set line gap */
 }
 
 .prop {
-  display: inline-block; /* 使每个项都在一行 */
-  margin-right: 1rem; /* 设置间距以保持整洁 */
-  padding: 0.5rem; /* 可选：设置内部间距 */
-  border: 1px solid #ccc; /* 可选：给每个项加边框 */
-  border-radius: 4px; /* 可选：圆角边框 */
+  display: inline-block; /* make each item in a line */
+  margin-right: 1rem; /* set spacing to keep it neat */
+  padding: 0.5rem; /* optional: set internal padding */
+  border: 1px solid #ccc; /* optional: add border to each item */
+  border-radius: 4px; /* optional: rounded border */
 }
 
 </style>

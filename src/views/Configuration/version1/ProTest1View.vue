@@ -153,16 +153,16 @@ const noSolution = async () => {
     let dependencyAlert = '';
     let pathAlert = '';
     alert('This property cannot coexist with your previous selection. Please try othters.');
-    // if (options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.length > 0) {
-    //   dependencyAlert = 'For this property, you need to choose:\n';
-    //   options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.forEach(dependency => {
-    //     dependencyAlert += `Option${dependency.option}: ${dependency.propertyText} `;
-    //     if (dependency !== options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.slice(-1)[0]) {
-    //       dependencyAlert += 'or\n';
-    //     }
-    //   })
-    //   alert(dependencyAlert);
-    // }
+    if (options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.length > 0) {
+      dependencyAlert = 'For this property, you need to choose:\n';
+      options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.forEach(dependency => {
+        dependencyAlert += `Option${dependency.option}: ${dependency.propertyText} `;
+        if (dependency !== options.value[lastChoice.value.option].properties[lastChoice.value.property].dependenciesArray.slice(-1)[0]) {
+          dependencyAlert += 'or\n';
+        }
+      })
+      alert(dependencyAlert);
+    }
     if (options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.length > 0){
       pathAlert = 'For this property, you can choose:\n';
       options.value[lastChoice.value.option].properties[lastChoice.value.property].paths.forEach(path => {

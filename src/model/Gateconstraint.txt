@@ -1,0 +1,19 @@
+enum Gateway;
+
+list of record(Property: p, list of Property: req): gateDependencies; 
+constraint forall(p in Property where length([0 | i in index_set(gateDependencies) where gateDependencies[i].p = p]) > 0) (
+  chosen[p] -> forall(i in index_set(gateDependencies) where gateDependencies[i].p = p) (
+    forall(r in gateDependencies[i].req) (chosen[r])
+  )
+);
+
+list of record(Gateway: g, set of Property: props): gateOutgoings;
+constraint
+  forall(g in Gateway)(
+    let {
+      set of int: idxs = {i | i in index_set(gateOutgoings) where gateOutgoings[i].g = g},
+      array[int] of var bool: active =
+        [ exists(p in gateOutgoings[i].props)(chosen[p]) | i in idxs ]
+    } in
+      sum(i in index_set(active))(bool2int(active[i])) = 1
+  );
