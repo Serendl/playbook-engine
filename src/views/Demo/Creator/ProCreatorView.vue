@@ -4,7 +4,7 @@
       @importProcess="importProcess"
       @saveProcess="saveProcess"
     />
-    <div class="page-container">
+    <div v-if="initialized" class="page-container">
       <div class="left-bar">
         <ProStructure
           :processData="processData"
@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import HeadBar from '@/components/HeadBar.vue';
 import ProStructure from './ProStructureView.vue';
 import ProDetailView from './ProDetailView.vue';
@@ -54,10 +54,10 @@ const processData = ref({
   processes: []
 })
 
-const processAttr = ref([]);
+const attributes = ref([]);
 const gateways = ref([]);
 const events = ref([]);
-
+let isLinear = true;
 
 const selectedProcess = ref(null)
 const selectedSubProcess = ref(null)
@@ -67,6 +67,10 @@ const currentProcess = ref([-1, -1]);
 const lastProcess = ref([-1, -1]);
 // total page is [processNum, subProcessNum]
 const totalpage = ref([0, 0]);
+
+// initialize status
+const initialized = ref(false);
+
 
 const setTotalPage = () => {
   totalpage.value = [
@@ -236,10 +240,18 @@ const nextStep = () => {
   if(processData.value.processes.length > 0) {
     // sessionStorage.setItem('processData', JSON.stringify(processData.value));
     // sessionStorage.setItem('attributes', JSON.stringify(processAttr.value));
-    localStorage.setItem('processData', JSON.stringify(processData.value));
-    localStorage.setItem('attributes', JSON.stringify(processAttr.value));
-    localStorage.setItem('gateways', JSON.stringify(gateways.value));
-    localStorage.setItem('events', JSON.stringify(events.value));
+    const data = {
+      process: {
+        type: processData.value.type,
+        processes: processData.value.processes
+      },
+      gateways: gateways.value,
+      events: events.value,
+      processAttr: attributes.value,
+      linear: isLinear
+    }
+    localStorage.setItem('processData', JSON.stringify(data));
+
     if (processData.value.type === 'Text Playbook') {
       router.push('/textPlaybook');
     } else if (processData.value.type === 'Configurator Playbook') {
@@ -260,7 +272,8 @@ const saveProcess = async() => {
     },
     gateways: gateways.value,
     events: events.value,
-    processAttr: processAttr.value
+    processAttr: attributes.value,
+    linear: isLinear
   }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -281,6 +294,7 @@ const saveProcess = async() => {
 
 // Function to import a model from a JSON file
 const importProcess = async(file) => {
+  initialized.value = false;
   if (file) {
     const reader = new FileReader();
 
@@ -292,7 +306,7 @@ const importProcess = async(file) => {
         if (importedData) {
           // load the imported data into the data variables
           processData.value = importedData.process;
-          processAttr.value = importedData.processAttr;
+          attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
           events.value = importedData.events;
 
@@ -320,6 +334,8 @@ const importProcess = async(file) => {
     reader.readAsText(file);
 
     console.log(processData.value);
+
+    initialized.value = true;
   }
 };
 
@@ -336,17 +352,13 @@ watch(processData.value.processes, (newVal) => {
 }, { deep: true });
 
 onMounted(async() => {
-  await nextTick();
-  const typeStorage = JSON.parse(localStorage.getItem('type'));
-  if (typeStorage) {
-    processData.value.type = typeStorage;
-  };
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));
   if (processDataStorage) {
     processData.value = processDataStorage.process;
-    processAttr.value = processDataStorage.processAttr;
+    attributes.value = processDataStorage.processAttr;
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
+    isLinear = processDataStorage.linear;
     if (processData.value.processes.length > 0) {
       selectedProcess.value = processData.value.processes[0];
       lastProcess.value[0] = 0;
@@ -359,6 +371,8 @@ onMounted(async() => {
       totalpage.value = [0, 0];
     }
   }
+
+  initialized.value = true;
 })
 
 </script>

@@ -7,16 +7,11 @@
       <!-- Add Process Section -->
       <div class="button-line">
         <div>
-          <!-- <button @click="addOption" class="btn btn-primary me-3">Add Option</button> -->
-          <!-- <button @click="addAttribute" class="btn btn-primary me-3">Add Property Attribute</button> -->
           <button @click="visible = true" class="btn btn-primary me-3">Add Option Attribute</button>
+          <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button>
+          <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
           <button @click="saveModel" class="btn btn-primary text-end">Save Model</button>
         </div>
-        <!-- <div>
-          <button @click="saveModel" class="btn btn-primary mt-3 text-end">Save Model</button>
-          <button @click="triggerFileUpload" class="btn btn-primary mt-3 ms-2">Import Model</button>
-          <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
-        </div> -->
       </div>
 
       <div class="generate-process">
@@ -26,33 +21,19 @@
             <div class="id-name-row" style="align-items: baseline;">
               <p>ID: {{ index + 1 }} </p>
               <label>Process Name: {{ process.name }}</label>
-              <!-- <input v-model="process.name" placeholder="Option Name" class="process-name-input form-control" /> -->
-
-              <!-- <label class="ms-5">Property Number: </label>
-              <input v-model="process.propertyNum" @input="addProperty(index)" placeholder="Option Number" class="process-name-input form-control" /> -->
               <label class="ms-5">Choice Number Range: </label>
               <input v-model="process.lowChoiceNum" placeholder="Low Choice Number" class="choice-number-input form-control" />
               <label class="ms-2">to</label>
               <input v-model="process.upChoiceNum" placeholder="Up Choice Number" class="choice-number-input form-control" />
             </div>
-            <!-- <div>
-              <button v-show="options.length" @click="addProperty(index)">Add Property to the Option</button>
-              <button @click="deleteOption(index)" class="delete-btn ms-2">🗑️</button>
-            </div> -->
           </div>
 
           <div v-for="(subProcess, subIndex) in process.subProcessArray" :key="subIndex" class="attribute-item">
             <hr class="my-4" />
             <div class="name-delete">
               <div class="id-name-row">
-                <!-- <p>Option ID: {{ option.id }}</p> -->
                 <label class="me-3">{{ getPrefix(subIndex) }}</label>
                 <label>Name: {{subProcess.name}}</label>
-                <!-- <input v-model="subProcess.name" placeholder="Property Name" class="form-control attribute-input ms-2" /> -->
-              </div>
-              <div>
-                <!-- <button @click="addDepList(index, subIndex)">Add Dependency List</button> -->
-                <!-- <button @click="deleteProperty(index, subIndex)" class="delete-btn ms-2">🗑️</button> -->
               </div>
             </div>
 
@@ -86,7 +67,6 @@
 
   <DialogComp v-model:visible="visible" modal header="Add Attribute" :style="{ width: '25rem' }">
     <p style="font-size: 1.15em">Please Enter the Attribute Name:</p>
-    <!-- <span class="text-surface-800 dark:text-surface-400 block mb-8">Please Enter the Attribute Name:</span> -->
     <div class="id-name-row mt-3 mb-3" style="align-items: baseline;">
         <label for="attribute name" class="font-semibold w-24 me-2">Attribute Name: </label>
         <input v-model="attrName" id="attribute name" class="flex-auto process-name-input form-control" autocomplete="off" />
@@ -113,9 +93,13 @@ const attrName = ref('');
 // List of processes
 const processData = ref([]);
 
+const gateways = ref([]);
+const events = ref([]);
+const isLinear = ref('false')
+
 // const completeData = ref('');
 
-// const fileInput = ref(null);
+const fileInput = ref(null);
 
 let modelString = 'enum Property;\n' +
                   'array[Property] of var bool: chosen ::no_output;\n' +
@@ -306,22 +290,37 @@ const saveProcess = async() => {
     console.error('Error during solving:', error);
   }
 
-  sessionStorage.setItem('completeData', dataString);
-  sessionStorage.setItem('modelString', modelString);
-  sessionStorage.setItem('attrString', attrString);
-  sessionStorage.setItem('attributes', JSON.stringify(attributes.value));
-  sessionStorage.setItem('processes', JSON.stringify(processData.value.processes));
-  router.push('/ConfiguratorPlaybook');
+  const data = {
+    process: {
+      type: processData.value.type,
+      processes: processData.value.processes
+    },
+    gateways: gateways.value,
+    events: events.value,
+    processAttr: attributes.value,
+    linear: isLinear
+  }
+  localStorage.setItem('processData', JSON.stringify(data));
+
+  if (attributes.value.length > 0) {
+    router.push('/AttrTemplate');
+  } else {
+    router.push('/ConfiguratorPlaybook');
+  }
   console.log(1);
 };
 
 const saveModel = async() => {
-  const process = processData.value;
-  const processAttr = attributes.value;
   const data = {
-    process,
-    processAttr
-  };
+    process: {
+      type: processData.value.type,
+      processes: processData.value.processes
+    },
+    gateways: gateways.value,
+    events: events.value,
+    processAttr: attributes.value,
+    linear: isLinear.value
+  }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -334,51 +333,44 @@ const saveModel = async() => {
   URL.revokeObjectURL(url);
 };
 
-// const triggerFileUpload = () => {
-//   fileInput.value.click();
-// };
+const triggerFileUpload = () => {
+  fileInput.value.click();
+};
 
 // // Function to import a model from a JSON file
-// const importModel = (event) => {
-//   const file = event.target.files[0];
+const importModel = (event) => {
+  const file = event.target.files[0];
 
-//   if (file) {
-//     const reader = new FileReader();
+  if (file) {
+    const reader = new FileReader();
 
-//     reader.onload = (e) => {
-//       try {
-//         const importedData = JSON.parse(e.target.result);
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
 
-//         // Check if the imported data has the required properties
-//         if (
-//           importedData
-//         ) {
-//           // load the imported data into the data variables
-//           options.value = importedData.process;
-//           attributes.value = importedData.processAttr;
+        // Check if the imported data has the required properties
+        if (
+          importedData
+        ) {
+          // load the imported data into the data variables
+          processData.value = importedData.process;
+          attributes.value = importedData.processAttr;
+          gateways.value = importedData.gateways;
+          events.value = importedData.events;
+          isLinear.value = importedData.linear;
 
-//           options.value.forEach(option => {
-//             option.properties.forEach(property => {
-//               property.depLists.forEach(depList => {
-//                 depList.dependencies.forEach(listDep => {
-//                   updateDepProperty(listDep);
-//                 });
-//               });
-//             });
-//           });
+          console.log('Data improted successfully:', importedData);
+        } else {
+          console.error('JSON file does not contain the required data.');
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+      }
+    };
 
-//           console.log('Data improted successfully:', importedData);
-//         } else {
-//           console.error('JSON file does not contain the required data.');
-//         }
-//       } catch (error) {
-//         console.error('Import error:', error);
-//       }
-//     };
-
-//     reader.readAsText(file);
-//   }
-// };
+    reader.readAsText(file);
+  }
+};
 
 // click the solve button to solve the model
 const solveModel = async () => {
@@ -430,15 +422,14 @@ const solveModel = async () => {
 onMounted(async() => {
   await nextTick();
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));
-  const attributesStorage = JSON.parse(localStorage.getItem('attributes'));
   const gwDataStorage = JSON.parse(localStorage.getItem('GWConstraint'));
 
   if (processDataStorage) {
-    processData.value = processDataStorage;
-  }
-
-  if (attributesStorage) {
-    attributes.value = attributesStorage;
+    processData.value = processDataStorage.process;
+    attributes.value = processDataStorage.processAttr;
+    gateways.value = processDataStorage.gateways;
+    events.value = processDataStorage.events;
+    isLinear.value = processDataStorage.linear;
   }
 
   if (gwDataStorage) {

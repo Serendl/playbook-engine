@@ -85,22 +85,8 @@
       </div>
 
       <div class="mb-3 button-line">
-        <button @click="nextStep()" class="btn btn-primary">Define Attributes</button>
+        <button @click="nextStep()" class="btn btn-primary">{{ getButtonName() }}</button>
       </div>
-
-      <!-- <div class="mb-3 button-line">
-        <button @click="visible1 = true" class="btn btn-primary">+ Add Process</button>
-        <DialogComp v-model:visible="visible1" modal header="Add Process" :style="{ width: '25rem' }">
-          <p style="font-size: 1.15em">Please Enter the Process Name:</p>
-          <div class="id-name-row mt-3 mb-3" style="align-items: baseline;">
-              <input v-model="proName" id="process name" class="flex-auto process-name-input form-control" autocomplete="off" />
-          </div>
-          <div class="flex gap-2"  style="display: flex; justify-content: flex-end; max-width: 500px;">
-              <button type="button" label="Cancel" class="btn btn-primary me-3" @click="{visible1 = false; clearDialog()}">Cancel</button>
-              <button type="button" label="Save" class="btn btn-primary me-3" @click="{visible1 = false; addProcess()}">Save</button>
-          </div>
-        </DialogComp>
-      </div> -->
     </div>
   </div>
 </template>
@@ -174,6 +160,15 @@ const getPrefix = (index, subIndex) => {
   }
   if (props.processData.type === 'Configurator Playbook') {
     return String.fromCharCode(65 + subIndex ) + '.';
+  }
+}
+
+const getButtonName = () => {
+  if (props.processData.type === 'Text Playbook') {
+    return 'Complete';
+  }
+  if (props.processData.type === 'Configurator Playbook') {
+    return 'Define Gateway';
   }
 }
 
