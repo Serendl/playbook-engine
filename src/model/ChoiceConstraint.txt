@@ -1,0 +1,2 @@
+set of Property: been_chosen;
+constraint forall(p in been_chosen) (chosen[p]);

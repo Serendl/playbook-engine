@@ -17,10 +17,11 @@ import ProDefineView3 from '@/views/Configuration/version4/ProDefineView3.vue'
 import ProTest4View from '@/views/Configuration/version4/ProTest4View.vue'
 import ProCreator from '@/views/Demo/Creator/ProCreatorView.vue'
 import ProBPMNView from '@/views/Demo/Creator/ProBPMNView.vue'
-import TextPlaybookView from '@/views/Demo/playbook/TextPlaybookView.vue'
+import PlaybookView from '@/views/Demo/playbook/PlaybookView.vue'
 import DefineAttrView from '@/views/Demo/Creator/DefineAttrView.vue'
 import ConfiguratorView from '@/views/Demo/ConfiguratorView.vue'
 import DefineGatewayView from '@/views/Demo/Creator/DefineGatewayView.vue'
+import AttrTemplateView from '@/views/Demo/Creator/AttrTemplateView.vue'
 
 const routes = [
   {
@@ -114,9 +115,9 @@ const routes = [
     component: ProBPMNView
   },
   {
-    path: '/TextPlaybook',
-    name: 'TextPlaybook',
-    component: TextPlaybookView
+    path: '/Playbook',
+    name: 'Playbook',
+    component: PlaybookView
   },
   {
     path: '/DefineAttr',
@@ -132,6 +133,11 @@ const routes = [
     path: '/DefineGateway',
     name: 'DefineGateway',
     component: DefineGatewayView
+  },
+  {
+    path: '/AttrTemplate',
+    name: 'AttrTemplate',
+    component: AttrTemplateView
   }
 ]
 

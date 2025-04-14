@@ -6,7 +6,7 @@
       <hr>
 
       <div>
-        <div v-for="(process, index) in props.processData" :key="index" class="process-line">
+        <div v-for="(process, index) in props.processData.processes" :key="index" class="process-line">
           <div class="d-flex align-items-center justify-content-between process-name-line">
             <div class="d-flex align-items-center mb-1">
               <div>
@@ -28,37 +28,83 @@
                 </button>
               </div>
               <div @click="selectProcess(index)" class="ms-2 process-name">
-                {{ process.id }}. {{ process.name }}
+                {{ index + 1 }}. {{ process.name }}
               </div>
             </div>
           </div>
-          <div v-show="process.show" v-for="(subprocess, subIndex) in process.subProcessArray" :key="subIndex">
+          <div v-show="process.show" v-for="(subProcess, subIndex) in process.subProcessArray" :key="subIndex">
             <div class="d-flex align-items-center subprocess-name">
               <div class="subprocess-line ms-1 mb-1">
+
+                <Checkbox
+                  v-if="props.processData.type === 'Configurator Playbook'"
+                  :input-id="'option-' + index + '-property-' + subIndex"
+                  :name="'option-' + index"
+                  :value="subIndex"
+                  v-model="localChoices[index]"
+                  @change="updateLastChoice(index, subIndex)"
+                  :disabled="!localProcessSolution[index]?.has(subIndex + 1)"
+                />
+                <!-- <label :for="'option-' + index + '-property-' + subIndex" class="ms-2">{{ getPrefix(subIndex) }}: {{ subProcess.name }}</label> -->
+
                 <div @click="selectSubProcess(index, subIndex)" class="ms-2 process-name">
-                  {{ process.id }}.{{ subprocess.id }} {{ subprocess.name }}
+                  <!-- {{ index + 1 }}.{{ subIndex + 1 }} {{ subprocess.name }} -->
+                  {{ getPrefix(index, subIndex) }} {{ subProcess.name }}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="mb-3 button-line">
+        <button @click="nextStep()" class="btn btn-primary">Define Attributes</button>
+      </div>
     </div>
   </div>
 </template>
 
+
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { computed } from 'vue';
+import Checkbox from 'primevue/checkbox';
+
 const props = defineProps({
   processData: {
+    type: Object,
+    required: true
+  },
+  choices: {
+    type: Array,
+    required: true
+  },
+  processSolution: {
     type: Array,
     required: true
   }
 });
 
-const emit = defineEmits(['expand', 'selectProcess', 'selectSubProcess']);
+const localChoices = computed({
+  get: () => props.choices,
+  set: (value) => {
+    emit('updateChoices', value);
+  }
+})
+
+const localProcessSolution = computed({
+  get: () => props.processSolution,
+  set: (value) => {
+    emit('updateChoices', value);
+  }
+})
+
+const emit = defineEmits(['expand', 'addProcess', 'deleteProcess', 'deleteSubProcess', 'addSubProcess', 'selectProcess', 'selectSubProcess', 'saveProcess', 'importProcess', 'nextStep', 'updateChoices', 'updateLastChoice']);
 
 // const fileInput = ref(null);
+
+const updateLastChoice = (index, subIndex) => {
+  emit('updateLastChoice', index, subIndex);
+}
 
 const expand = (index) => {
   emit('expand', index);
@@ -70,6 +116,20 @@ const selectProcess = (index) => {
 
 const selectSubProcess = (index, subIndex) => {
   emit('selectSubProcess', index, subIndex);
+}
+
+
+const getPrefix = (index, subIndex) => {
+  if (props.processData.type === 'Text Playbook') {
+    return `${index + 1}.${subIndex + 1}`;
+  }
+  if (props.processData.type === 'Configurator Playbook') {
+    return String.fromCharCode(65 + subIndex ) + '.';
+  }
+}
+
+const nextStep = () => {
+  emit('nextStep');
 }
 
 </script>

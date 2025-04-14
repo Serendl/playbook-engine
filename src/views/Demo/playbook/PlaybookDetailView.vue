@@ -2,12 +2,10 @@
   <div class="container">
     <div class="mt-3" style="width: 100%;">
       <div v-if="selectedProcess">
-        <!-- <h1>Process {{ selectedProcess.id }}  {{selectedProcess.name}}</h1> -->
-         <h1>Process {{ localProcess.id }} {{ localProcess.name }}</h1>
+        <h1>Process {{ props.currentProcess[0] + 1 }}. {{ localProcess.name }}</h1>
       </div>
-      <div v-if="selectedSubProcess">
-        <!-- <h2>SubProcess {{ selectedSubProcess.id }} {{ selectedSubProcess.name }}</h2> -->
-        <h2>SubProcess {{ localSubProcess.id }} {{ localSubProcess.name }}</h2>
+      <div v-if="localSubProcess">
+        <h2>{{ getPrefix() }}</h2>
       </div>
       <hr>
 
@@ -15,72 +13,11 @@
       <div class="process-area">
         <div class="process-detail">
           <div v-if="selectedSubProcess" >
-            <div class="button-line">
-              <!-- <button @click="addDepList()" class="btn btn-primary me-3">+ Add Dependency List</button> -->
-              <button @click="addSection()" class="btn btn-primary me-3">+ Add Section</button>
-              <button @click="addValuePanel()" class="btn btn-primary me-3">+ Add Value Define Panel</button>
-            </div>
 
-            <div class="description quill-card">
+            <div v-if="localSubProcess.description" class="description quill-card">
               <h3>Description</h3>
               <div id="subDescQuill">
-                <textarea v-model="localSubProcess.description" rows="5" class="form-control" placeholder="Sub Process Description"></textarea>
-              </div>
-            </div>
-
-            <div v-if="localSubProcess.depListArray.length > 0" class="dependecy-area">
-              <div>
-                <h3>Dependency</h3>
-              </div>
-              <div v-for="(depList, depListIndex) in localSubProcess.depListArray" :key="depListIndex" class="depList quill-card">
-                <div class="depList-id"  style="align-items: baseline;">
-                  <h5>DepList {{ depListIndex + 1 }}</h5>
-                  <div>
-                    <button @click="addDep(depListIndex)" class="delete-button me-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                        <g id="Edit / Add_Plus">
-                          <path id="Vector" d="M6 12H12M12 12H18M12 12V18M12 12V6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </g>
-                      </svg>
-                    </button>
-                    <button @click="deleteDepList(depListIndex)" class="delete-button">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="depList-name">
-                  <label class="me-2">Name:</label>
-                  <input type="text" class="form-control" v-model="depList.name" placeholder="DepList Name" style="width: 60%; height: 80%;">
-                </div>
-                <div v-for="(dep, depIndex) in depList.dependencies" :key="depIndex" class="dep">
-                  <hr style="border: none; border-top: 1px dashed #999;" />
-                    <div class="depRow">
-                      <div class="d-flex align-items-center">
-                        <label class="me-2">Process:</label>
-                        <input type="text" class="form-control me-2" v-model="dep.process" placeholder="Process ID" style="width: 25%; height: 80%;">
-                        <label class="me-2">SubPro:</label>
-                        <input type="text" class="form-control" v-model="dep.subPro" placeholder="SubPro ID" style="width: 25%; height: 80%;">
-                      </div>
-                      <div>
-                        <button @click="deleteDep(depListIndex, depIndex)" class="delete-button">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-
-                  </div>
-                </div>
+                <p>{{ localSubProcess.description }}</p>
               </div>
             </div>
 
@@ -89,60 +26,10 @@
               <div v-for="(section, index) in localSubProcess.sectionArray" :key="index">
                 <div class="section quill-card">
                   <div class="section-title" style="align-items: baseline;">
-                    <input type="text" class="form-control me-2" v-model="section.title" placeholder="Section Title">
-                    <div>
-                      <button @click="deleteSection()" class="delete-button ms-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      </button>
-                    </div>
+                    <h5>{{section.title}}</h5>
                   </div>
                   <div class="section-description">
-                    <!-- <input type="text" class="form-control" v-model="section.description" placeholder="Section Description"> -->
-                    <textarea v-model="section.description" rows="5" class="form-control" placeholder="Section Description"></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="localSubProcess.attributeArray.length > 0 " class="section-area">
-              <h3>Value Define Panel</h3>
-              <div v-for="(attr, index) in localSubProcess.attributeArray" :key="index">
-                <div class="section quill-card">
-                  <div class="section-title" style="align-items: baseline;">
-                    <input type="text" class="form-control me-2" v-model="attr.title" placeholder="Value Title">
-                    <div>
-                      <button @click="deleteValue()" class="delete-button ms-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="section-description">
-                    <!-- <input type="text" class="form-control" v-model="attr.description" placeholder="Value Description"> -->
-                    <textarea v-model="attr.description" rows="5" class="form-control" placeholder="Value Description"></textarea>
-                  </div>
-
-                  <div class="slider-area">
-                    <SliderComp v-model="attr.value" :min="1" :max="5" class="w-56 slider-space costom-slider"></SliderComp>
-                    <div class="slider-info">
-                      <div class="slider-value">
-                        <input type="text" class="form-control me-2" v-model="attr.valueDesc[attr.value - 1]" placeholder="Value Description" style="width: 200px;">
-                        <p>({{ attr.value }})</p>
-                      </div>
-                      <!-- <input type="text" class="form-control" v-model="attr.valueExplan[attr.value - 1 ]" placeholder="Value Explanation"> -->
-                      <textarea v-model="attr.valueExplan[attr.value - 1 ]" rows="3" class="form-control" placeholder="Value Explanation"></textarea>
-                    </div>
+                    <p>{{ section.description }}</p>
                   </div>
                 </div>
               </div>
@@ -152,25 +39,28 @@
           <div v-else class="description quill-card">
             <h3>Description</h3>
             <div id="descQuill">
-              <textarea v-model="localProcess.description" rows="5" class="form-control" placeholder="Process Description"></textarea>
+              <p>{{ localProcess.description }}</p>
             </div>
           </div>
 
           <div class="button-line">
             <button v-if="currentProcess[0] + currentProcess[1] > -1 " @click="previousPage()" class="me-2 btn btn-primary">Previous Page</button>
-            <button v-if="currentProcess[0] === totalpage[0] - 1 && currentProcess[1] === totalpage[1] -1 " @click="generateProcess" class="btn btn-primary">Generate Process Model</button>
-            <button v-else @click="nextPage" class="btn btn-primary">Next Page</button>
+            <button v-if="currentProcess[0] === totalpage[0] - 1 && currentProcess[1] === totalpage[1] -1 " @click="nextStep()" class="btn btn-primary">{{ getButtonDes() }}</button>
+            <button v-else @click="nextPage()" class="btn btn-primary">Next Page</button>
           </div>
         </div>
       </div>
 
 
     </div>
-
-    <div>
-
-    </div>
   </div>
+
+  <button
+    @click="handleClick"
+    class="fixed right-6 bottom-6 z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700"
+  >
+  <FileImageOutlined />
+  </button>
 </template>
 
 <script setup>
@@ -193,51 +83,39 @@ const props = defineProps({
   totalpage: {
     type: Array,
     default: () => [0, 0]
+  },
+  type: {
+    type: String,
+    default: ''
   }
 });
 
-const emit = defineEmits(['updateProcess', 'updateSubProcess', 'previousPage', 'nextPage', 'generateProcess']);
+const emit = defineEmits(['previousPage', 'nextPage', 'nextStep']);
 
 const localProcess = computed({
-  get: () => props.selectedProcess,
-  set: (value) => {
-    emit('updateProcess', value);
-  }
+  get: () => props.selectedProcess
 })
 
 const localSubProcess = computed({
-  get: () => props.selectedSubProcess,
-  set: (value) => {
-    emit('updateSubProcess', value);
-  }
+  get: () => props.selectedSubProcess
 })
 
-
-const addSection = () => {
-  const newSection = {
-    title: '',
-    description: ''
+const getPrefix = () => {
+  if (props.type === 'Text Playbook') {
+    return  'SubProcess' + props.currentProcess[1] + '' + localSubProcess.value.name;
   }
-  localSubProcess.value.sectionArray.push(newSection);
-}
-
-const deleteSection = (index) => {
-  localSubProcess.value.sectionArray.splice(index, 1);
-}
-
-const addValuePanel = () => {
-  const newAttribute = {
-    title: '',
-    description: '',
-    value: 1,
-    valueDesc: ['', '', '', '', ''],
-    valueExplan: ['', '', '', '', '']
+  if (props.type === 'Configurator Playbook') {
+    return  'Option' + ' ' + String.fromCharCode(65 + props.currentProcess[1]) + '. ' + localSubProcess.value.name;
   }
-  localSubProcess.value.attributeArray.push(newAttribute);
 }
 
-const deleteValue = (index) => {
-  localSubProcess.value.attributeArray.splice(index, 1);
+const getButtonDes = () => {
+  if (props.type === 'Text Playbook') {
+    return 'Generate Process Model';
+  }
+  if (props.type === 'Configurator Playbook') {
+    return 'Define Attributes';
+  }
 }
 
 const previousPage = () => {
@@ -248,8 +126,8 @@ const nextPage = () => {
   emit('nextPage');
 }
 
-const generateProcess = () => {
-  emit('generateProcess');
+const nextStep = () => {
+  emit('nextStep');
 }
 
 </script>

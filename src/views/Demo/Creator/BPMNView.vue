@@ -124,9 +124,9 @@ function generateProcess() {
   const nodeMap = {}
   const gatewayMap = {}
   const eventMap = {}
-  let islinear = true;
+  let isLinear = true;
 
-  // 初始化 node 和 gateway 的结构
+  // 初始化 node, event 和 gateway 的结构
   for (const el of elements) {
     if (el.$type === 'bpmn:SequenceFlow') continue
 
@@ -138,12 +138,10 @@ function generateProcess() {
         incoming: [],
         outgoing: [],
         incomingDetails: [],
-        outgoingDetails: [],
-        selectedPro: null,
-        selectedOption: null
+        outgoingDetails: []
       }
       gatewayMap[el.id] = gateWayBase
-      islinear = false;
+      isLinear = 'false';
     } else if(el.$type === 'bpmn:StartEvent' || el.$type === 'bpmn:EndEvent') {
       const seEventBase = {
         id: el.id,
@@ -176,14 +174,16 @@ function generateProcess() {
       const sourceId = el.sourceRef?.id
       const targetId = el.targetRef?.id
 
-      if (sourceId && (nodeMap[sourceId] || gatewayMap[sourceId])) {
+      if (sourceId) {
         if (nodeMap[sourceId]) nodeMap[sourceId].outgoing.push(targetId)
-        else gatewayMap[sourceId].outgoing.push(targetId)
+        else if (gatewayMap[sourceId]) gatewayMap[sourceId].outgoing.push(targetId)
+        else if (eventMap[sourceId]) eventMap[sourceId].outgoing.push(targetId)
       }
 
-      if (targetId && (nodeMap[targetId] || gatewayMap[targetId])) {
+      if (targetId) {
         if (nodeMap[targetId]) nodeMap[targetId].incoming.push(sourceId)
-        else gatewayMap[targetId].incoming.push(sourceId)
+        else if (gatewayMap[targetId]) gatewayMap[targetId].incoming.push(sourceId)
+        else if (eventMap[targetId]) eventMap[targetId].incoming.push(sourceId)
       }
     }
   }
@@ -196,7 +196,7 @@ function generateProcess() {
     gateways: Object.values(gatewayMap),
     events: Object.values(eventMap),
     processAttr: [],
-    linear: JSON.stringify(islinear)
+    linear: isLinear
   }
 
   localStorage.setItem('processData', JSON.stringify(result))

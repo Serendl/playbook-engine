@@ -85,16 +85,20 @@
 
 <script setup>
 import router from '@/router';
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const visible = ref(false);
 const attrName = ref('');
 
 // List of processes
-const processes = ref([]);
+const processData = ref([]);
 
 // List of gateways
 const gateways = ref([]);
+
+const attributes = ref([]);
+const events = ref([]);
+let isLinear = true;
 
 const fileInput = ref(null);
 
@@ -149,15 +153,16 @@ const getPrefix = (index) => {
 
 // Function to save the model to a JSON file
 const saveModel = async() => {
-  const processStorage = JSON.parse(localStorage.getItem('processData'));
-  const events = JSON.parse(localStorage.getItem('events'));
-  const processAttrStorage = JSON.parse(localStorage.getItem('processAttr'));
   const data = {
-    process: processStorage,
-    gateways: gateways.value,
-    events: events.value,
-    processAttr: processAttrStorage
-  }
+      process: {
+        type: processData.value.type,
+        processes: processData.value.processes
+      },
+      gateways: gateways.value,
+      events: events.value,
+      processAttr: attributes.value,
+      linear: isLinear
+    }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -188,13 +193,10 @@ const importModel = (event) => {
         // Check if the imported data has the required properties
         if (importedData) {
           // load the imported data into the data variables
-          processes.value = importedData.process;
+          processData.value = importedData.process;
+          attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
-
-          localStorage.setItem('processData', JSON.stringify(importedData.process));
-          localStorage.setItem('attributes', JSON.stringify(importedData.processAttr));
-          localStorage.setItem('gateways', JSON.stringify(importedData.gateways));
-          localStorage.setItem('events', JSON.stringify(importedData.events));
+          events.value = importedData.events;
 
           console.log('Data improted successfully:', importedData);
         } else {
@@ -219,20 +221,23 @@ const defineAttr = () => {
 };
 
 onMounted(async() => {
-  await nextTick();
-  const gatewayStorage = JSON.parse(localStorage.getItem('gateways'));
-  const processStorage = JSON.parse(localStorage.getItem('processData'));
+  // const gatewayStorage = JSON.parse(localStorage.getItem('gateways'));
+  const processDataStorage = JSON.parse(localStorage.getItem('processData'));
 
-  console.log('Gateway Storage:', gatewayStorage);
-  console.log('Process Storage:', processStorage);
+  // console.log('Gateway Storage:', gatewayStorage);
+  // console.log('Process Storage:', processStorage);
 
-  if (gatewayStorage && processStorage) {
-    gateways.value = gatewayStorage;
-    processes.value = processStorage.processes;
+  if (processDataStorage) {
+    gateways.value = processDataStorage.gateways;
+    processData.value = processDataStorage.process;
+    attributes.value = processDataStorage.processAttr;
+    gateways.value = processDataStorage.gateways;
+    events.value = processDataStorage.events;
+    isLinear = processDataStorage.linear;
 
     const processMap = {};
     const indexMap = {};
-    processes.value.forEach((process, index) => {
+    processData.value.processes.forEach((process, index) => {
       processMap[process.id] = process;
       indexMap[process.id] = index;
     });
@@ -243,11 +248,6 @@ onMounted(async() => {
         proc.index = indexMap[id];
         return proc;
       })
-      // gateway.incomingOptionNames = gateway.incoming.map(id => {
-      //   const proc = processMap[id];
-      //   const names = proc.subProcessArray.map(subProc => subProc.name);
-      //   return names;
-      // })
 
       gateway.outgoingDetails = gateway.outgoing.map(id => {
         const proc = processMap[id];
