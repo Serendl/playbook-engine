@@ -58,7 +58,7 @@
       </div>
 
       <div class="mb-3 button-line">
-        <button @click="nextStep()" class="btn btn-primary">Define Attributes</button>
+        <!-- <button @click="nextStep()" class="btn btn-primary">Define Attributes</button> -->
       </div>
     </div>
   </div>
@@ -100,8 +100,6 @@ const localProcessSolution = computed({
 
 const emit = defineEmits(['expand', 'addProcess', 'deleteProcess', 'deleteSubProcess', 'addSubProcess', 'selectProcess', 'selectSubProcess', 'saveProcess', 'importProcess', 'nextStep', 'updateChoices', 'updateLastChoice']);
 
-// const fileInput = ref(null);
-
 const updateLastChoice = (index, subIndex) => {
   emit('updateLastChoice', index, subIndex);
 }
@@ -126,10 +124,6 @@ const getPrefix = (index, subIndex) => {
   if (props.processData.type === 'Configurator Playbook') {
     return String.fromCharCode(65 + subIndex ) + '.';
   }
-}
-
-const nextStep = () => {
-  emit('nextStep');
 }
 
 </script>

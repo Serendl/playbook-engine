@@ -29,11 +29,6 @@
               <p class="ms-3">Incoming Activity ID: {{ gateway.incomingDetails[index].id }} </p>
               <p class="ms-3">Incoming Activity Name: {{ gateway.incomingDetails[index].name }} </p>
             </div>
-
-            <!-- <div>
-              <button v-show="options.length" @click="addProperty(index)">Add Property to the Option</button>
-              <button @click="deleteOption(index)" class="delete-btn ms-2">🗑️</button>
-            </div> -->
           </div>
 
 
@@ -99,6 +94,7 @@ const gateways = ref([]);
 const attributes = ref([]);
 const events = ref([]);
 let isLinear = true;
+const attributeTemplates = ref([]);
 
 const fileInput = ref(null);
 
@@ -161,7 +157,8 @@ const saveModel = async() => {
       gateways: gateways.value,
       events: events.value,
       processAttr: attributes.value,
-      linear: isLinear
+      linear: isLinear,
+      attributeTemplates: attributeTemplates.value
     }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -197,6 +194,8 @@ const importModel = (event) => {
           attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
           events.value = importedData.events;
+          isLinear = importedData.linear;
+          attributeTemplates.value = importedData.attributeTemplates;
 
           console.log('Data improted successfully:', importedData);
         } else {
@@ -234,27 +233,28 @@ onMounted(async() => {
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
     isLinear = processDataStorage.linear;
+    attributeTemplates.value = processDataStorage.attributeTemplates;
 
-    const processMap = {};
-    const indexMap = {};
-    processData.value.processes.forEach((process, index) => {
-      processMap[process.id] = process;
-      indexMap[process.id] = index;
-    });
+    // const processMap = {};
+    // const indexMap = {};
+    // processData.value.processes.forEach((process, index) => {
+    //   processMap[process.id] = process;
+    //   indexMap[process.id] = index;
+    // });
 
-    gateways.value.forEach((gateway) => {
-      gateway.incomingDetails = gateway.incoming.map(id => {
-        const proc = processMap[id];
-        proc.index = indexMap[id];
-        return proc;
-      })
+    // gateways.value.forEach((gateway) => {
+    //   gateway.incomingDetails = gateway.incoming.map(id => {
+    //     const proc = processMap[id];
+    //     proc.index = indexMap[id];
+    //     return proc;
+    //   })
 
-      gateway.outgoingDetails = gateway.outgoing.map(id => {
-        const proc = processMap[id];
-        proc.index = indexMap[id];
-        return proc;
-      })
-    })
+    //   gateway.outgoingDetails = gateway.outgoing.map(id => {
+    //     const proc = processMap[id];
+    //     proc.index = indexMap[id];
+    //     return proc;
+    //   })
+    // })
   }
 });
 </script>

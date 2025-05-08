@@ -1,5 +1,5 @@
 <template>
-  <!-- <contextHolder /> -->
+  <contextHolder />
   <div class="page-container">
     <div class="left-container">
       <div class="process-container mb-2">
@@ -451,36 +451,56 @@ const solveCustomModel = async () => {
 
 // load data
 onMounted(async() =>{
-  const processDataStorage = sessionStorage.getItem('processData');
-  const processesStorage = JSON.parse(sessionStorage.getItem('processes'));
-  const completeDataStorage = sessionStorage.getItem('completeData');
-  const solutionsStorage = JSON.parse(sessionStorage.getItem('allSolutions'));
-  const modelStringStorage = sessionStorage.getItem('modelString');
-  const attributesStorage = JSON.parse(sessionStorage.getItem('attributes'));
+  // const processDataStorage = sessionStorage.getItem('processData');
+  // const processesStorage = JSON.parse(sessionStorage.getItem('processes'));
+  // const completeDataStorage = sessionStorage.getItem('completeData');
+  // const solutionsStorage = JSON.parse(sessionStorage.getItem('allSolutions'));
+  // const modelStringStorage = sessionStorage.getItem('modelString');
+  // const attributesStorage = JSON.parse(sessionStorage.getItem('attributes'));
 
+  // if (processDataStorage) {
+  //   processData.value = processDataStorage;
+  // };
+
+  // if (processesStorage) {
+  //   processes.value = processesStorage;
+  // };
+
+  // if (completeDataStorage) {
+  //   completeData.value = completeDataStorage;
+  // };
+
+  // if (modelStringStorage) {
+  //   modelString.value = modelStringStorage;
+  // };
+
+  // if (solutionsStorage) {
+  //   solutions.value = solutionsStorage;
+  // };
+
+  // if (attributesStorage) {
+  //   attributes.value = attributesStorage;
+  // };
+
+  const processDataStorage = JSON.parse(localStorage.getItem('processData'));
   if (processDataStorage) {
-    processData.value = processDataStorage;
-  };
-
-  if (processesStorage) {
-    processes.value = processesStorage;
-  };
-
-  if (completeDataStorage) {
-    completeData.value = completeDataStorage;
-  };
-
-  if (modelStringStorage) {
-    modelString.value = modelStringStorage;
-  };
-
-  if (solutionsStorage) {
-    solutions.value = solutionsStorage;
-  };
-
-  if (attributesStorage) {
-    attributes.value = attributesStorage;
-  };
+    processData.value = processDataStorage.process;
+    attributes.value = processDataStorage.processAttr;
+    gateways.value = processDataStorage.gateways;
+    events.value = processDataStorage.events;
+    attrTemplates.value = processDataStorage.attributeTemplate;
+    if (processData.value.processes.length > 0) {
+      selectedProcess.value = processData.value.processes[0];
+      lastProcess.value[0] = 0;
+      currentProcess.value[0] = 0;
+      totalpage.value = [
+        processData.value.processes.length || 0,
+        processData.value.processes[processData.value.processes.length - 1].subProcessArray.length || 0
+      ];
+    } else {
+      totalpage.value = [0, 0];
+    }
+  }
 
   choiceArrayCreate();
   setProcessSolution();

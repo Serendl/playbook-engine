@@ -3,7 +3,7 @@
     @importProcess="importProcess"
     @saveProcess="saveProcess"
   />
-  <div>
+  <div class="playbook-container">
     <div v-if="initialized">
       <contextHolder />
     </div>
@@ -34,12 +34,208 @@
       </div>
     </div>
   </div>
+  <button
+    @click="showDiagram()"
+    class="floating-button"
+    style="top: 15%;"
+  >
+    <FileImageOutlined style="font-size: 20px" />
+  </button>
 
+  <button
+    v-if="attributeTemplates.length > 0"
+    v-show="!drawerVisible1"
+    @click="toggleDrawer1()"
+    class="floating-button"
+    style="top: 22%;"
+  >
+    <SettingOutlined style="font-size: 20px" />
+  </button>
 
+  <button
+    v-if="recommendedSolutions.length > 0"
+    v-show="!drawerVisible2"
+    @click="toggleDrawer2()"
+    class="floating-button"
+    style="top: 29%;"
+  >
+    <UnorderedListOutlined style="font-size: 20px" />
+  </button>
+
+  <a-drawer
+    v-model:open="drawerVisible1"
+    placement="right"
+    title="Recommendation Configuration"
+    width="600"
+  >
+    <div>
+      <div class="d-flex justify-content-between mb-2" style="align-items: baseline;">
+        <h3 class="ms-2">Set Value Range</h3>
+        <button
+          @click="getRecom()"
+          class="btn me-2"
+          :class="{
+            'btn-primary': selectedTempt !== null,
+            'btn-secondary': selectedTempt === null
+          }"
+        >
+          Get Recommendations
+        </button>
+      </div>
+      <div>
+        <div v-for="(attr, index) in attributes" :key="index" class="d-flex ms-2" style="align-items: baseline;">
+          <label class="me-2">{{ attr.name }} Range:</label>
+          <input v-model="attr.lowBound" class="form-control mb-3" placeholder="Low" style="width: 80px;" />
+          <p class="ms-2 me-2">-</p>
+          <input v-model="attr.upBound" class="form-control mb-3" placeholder="Up" style="width: 80px;" />
+          <label class="ms-2 me-2">Operation:</label>
+          <select class="form-select mb-3" v-model="attr.operation" style="width: 120px;">
+            <option v-for="(operation, index) in operationList" :key="index" :value="operation">{{ operation }}</option>
+          </select>
+        </div>
+      </div>
+
+      <DialogComp v-model:visible="DiaVisible" modal header="Customize Your Model" :style="{ width: '57rem' }">
+        <div class="align=itmes-center section-area">
+          <div class="d-flex align-items-center mb-1" style="align-items: baseline;">
+            <input v-model="newAttrTempt.name" class="form-control mb-3" placeholder="Value Template Name" style="width: 200px;" />
+          </div>
+          <div class="section-description">
+            <textarea v-model="newAttrTempt.description" rows="3" class="form-control mb-3" placeholder="Template Description"></textarea>
+          </div>
+          <div v-for="(attr, index) in newAttrTempt.attrInfo" :key="index" >
+            <div class="section quill-card">
+              <div class="section-title" style="align-items: baseline;">
+                <h4> {{ attr.attrName }}</h4>
+              </div>
+
+              <div class="slider-area">
+                <SliderComp
+                  v-model="attr.rangeValue"
+                  :min="1"
+                  :max="5"
+                  :range="true"
+                  class="w-56 slider-space custom-slider"
+                />
+
+                <div class="slider-info mt-2">
+                  <div class="slider-value d-flex align-items-center">
+                    <input
+                      type="text"
+                      class="form-control me-2"
+                      v-model="attr.rangeDesc"
+                      placeholder="Value Range Description"
+                      style="width: 200px;"
+                    >
+                    <p>({{ attr.rangeValue[0] }} - {{ attr.rangeValue[1] }})</p>
+                  </div>
+
+                  <textarea
+                    v-model="attr.rangeExplan"
+                    rows="3"
+                    class="form-control"
+                    placeholder="Range Explanation"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2"  style="display: flex; justify-content: flex-end; max-width: 500px;">
+            <button type="button" label="Cancel" class="btn btn-primary me-3" @click="{visible2 = false; clearDialog()}">Clear</button>
+            <button type="button" label="Save" class="btn btn-primary me-3" @click="{visible2 = false; saveAttrTempt()}">Save</button>
+        </div>
+      </DialogComp>
+    </div>
+    <div>
+      <h3 class="ms-2">Select a Model</h3>
+      <div
+        v-for="(attrTempt, temIndex) in attributeTemplates"
+        :key="temIndex"
+        @click="selectTempt(temIndex)"
+        class="template-card"
+        :class="{
+          'selected': selectedTempt === temIndex
+        }"
+      >
+        <div>
+          <h4>{{ attrTempt.name }}</h4>
+          <p>{{ attrTempt.description }}</p>
+          <h5>Attributes:</h5>
+          <div v-for="(attr, attrIndex) in attrTempt.attrInfo" :key="attrIndex">
+            <p>{{ attr.attrName }}: {{ attr.rangeValue[0] }}-{{ attr.rangeValue[1] }} {{ attr.rangeExplan }}</p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="template-card d-flex align-items-center justify-content-center"
+        @click="newTempt()"
+      >
+        <PlusCircleOutlined style="font-size: 20px"/>
+      </div>
+    </div>
+  </a-drawer>
+
+  <a-drawer
+    v-model:open="drawerVisible2"
+    placement="right"
+    title="Recommendation"
+    width="600"
+  >
+    <div v-if="recommendedSolutions.length > 0">
+      <h1>Solutions</h1>
+      <div
+        v-for="(recSolution, recIndex) in recommendedSolutions"
+        :key="recIndex"
+        class="process template-card"
+        :class="{
+          'selected': selectedRec === recIndex
+        }"
+        @click="selectRec(recIndex)"
+      >
+        <div class="d-flex" style="align-items: baseline;">
+          <button
+            v-if="recSolution.show"
+            class="drop-down-button me-2"
+            @click.stop="expandOption(recIndex)"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M12 15l-4.243-4.243 1.415-1.414L12 12.172l2.828-2.829 1.415 1.414z"/>
+                </g>
+            </svg>
+          </button>
+          <button
+            v-if="!recSolution.show"
+            class="drop-down-button me-2"
+            @click.stop="expandOption(recIndex)"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M12.172 12L9.343 9.172l1.414-1.415L15 12l-4.243 4.243-1.414-1.415z"/>
+                </g>
+            </svg>
+          </button>
+          <h6 class="solution-header">Solution {{ recIndex + 1 }}:</h6>
+        </div>
+        <div v-show="recSolution.show" class="solution-item">
+          <div v-for="(prop, opIndex) in recSolution.chosen_prop.set" :key="opIndex" class="prop mb-2">
+            <strong class="me-1">Process {{ prop.c }} {{ processData.processes[prop.c - 1].name }}:</strong>
+            <strong>{{ transformer(prop.e - 1) }}. {{prop.displayName}}</strong>
+          </div>
+        </div>
+        <div v-for="(attr, attrIndex) in attributes" :key="attrIndex" class="ms-3">
+          <strong class="me-2">Total {{attr.name}}: {{ recSolution['Total' + attr.name] }}</strong>
+        </div>
+      </div>
+    </div>
+  </a-drawer>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import PlaybookHeadBar from '@/components/PlaybookHeadBar.vue';
 import PlaybookStructure from './PlaybookStructureView.vue';
 import PlaybookDetailView from './PlaybookDetailView.vue';
@@ -48,20 +244,72 @@ import GWConstraint from '@/model/Gateconstraint.txt?raw';
 import BasicModelString from '@/model/BasicModelString.txt?raw';
 import ChoiceConstraint from '@/model/ChoiceConstraint.txt?raw';
 import * as MiniZinc from 'minizinc';
+import { FileImageOutlined, SettingOutlined, PlusCircleOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 const [messageApi, contextHolder] = message.useMessage();
 // import router from '@/router';
+
+// recommendation setting drawer visible
+const drawerVisible1 = ref(false)
+const toggleDrawer1 = () => {
+  drawerVisible1.value = !drawerVisible1.value
+}
+
+// recommendation solutions drawer visible
+const drawerVisible2 = ref(false)
+const toggleDrawer2 = () => {
+  drawerVisible2.value = !drawerVisible2.value
+}
 
 const processData = ref({
   type: '',
   processes: []
 })
 
+// opration list
+const operationList = ["Minimize", "Maximize"];
+
+
+// basic data
 const attributes = ref([]);
 const gateways = ref([]);
 const events = ref([]);
+const attributeTemplates = ref([]);
+const newAttrTempt = ref(null);
 
+// create a new attribute template Dialog
+const DiaVisible = ref(false);
 
+// select a new attribute template
+const selectedTempt = ref(null);
+const selectTempt = (temIndex) => {
+  if (selectedTempt.value === temIndex) {
+    selectedTempt.value = null
+  } else {
+    selectedTempt.value = temIndex;
+  }
+}
+
+// select a recommended solution
+const selectedRec = ref(null);
+const selectRec = (recIndex) => {
+  if (selectedRec.value === recIndex) {
+    selectedRec.value = null
+    choices.value = [];
+    choiceArrayCreate();
+  } else {
+    selectedRec.value = recIndex;
+    choices.value = [];
+    choiceArrayCreate();
+    recommendedSolutions.value[recIndex].chosen_prop.set.forEach((prop) => {
+      const optionIndex = prop.c - 1;
+      const subOptionIndex = prop.e - 1;
+      choices.value[optionIndex].push(subOptionIndex);
+    })
+  }
+}
+
+// current process and subprocess
 const selectedProcess = ref(null)
 const selectedSubProcess = ref(null)
 // current process is [processIndex, subProcessIndex]
@@ -76,7 +324,7 @@ let initialized = false;
 
 //////////////////////////////Solution and Choices////////////////////////////////////
 // processes
-const processes = ref([]);
+// const processes = ref([]);
 
 // array to store the choices
 const choices = ref([]);
@@ -87,6 +335,28 @@ const processSolution = ref([]);
 // solutions from Minizinc
 const solutions = ref([]);
 
+// attrWeight
+// [
+//   [0.2, 0.3, 0.5],
+//   [0.1, 0.4, 0.5],
+//   [0.3, 0.3, 0.4]
+// ]
+const weightArray = ref([]);
+
+// temporary array to store the solution distance
+const disArray = ref([]);
+
+// custom dataString
+const customDataString = ref('');
+// custom constraintString
+const customConstraintString = ref('');
+// all solutions meeting user customization
+const customSolutions = ref([]);
+// recommended solutions: solutions filtered from customSolutions
+const recommendedSolutions = ref([]);
+
+
+// Model Strings
 const GWConstraintString = GWConstraint;
 
 let modelString = BasicModelString;
@@ -114,16 +384,253 @@ const choiceArrayCreate = () => {
   }
 };
 
-// set the processes
-const setProcesses = () => {
+
+// recommendSolutions expand button
+const expandOption = (recIndex) => {
+  recommendedSolutions.value[recIndex].show = !recommendedSolutions.value[recIndex].show;
+}
+
+//////////////////////////////// Recommendation Algorithm /////////////////////////////
+
+// cartesianProduct to get all combinations
+const cartesianProduct = (arrays) => {
+  return arrays.reduce((acc, curr) => {
+    return acc.flatMap((x) => curr.map((y) => [...x, y]));
+  }, [[]]);
+};
+
+// set the attribute weight
+const setAttrWeight = () => {
+  if (selectedTempt.value === null) {
+    return;
+  }
+  weightArray.value = [];
+  const currentAttrTempt = attributeTemplates.value[selectedTempt.value];
+  const attrWeightSet = [];
+  currentAttrTempt.attrInfo.forEach((attr) => {
+    let weightList = [];
+    let currentWeight = attr.rangeValue[0];
+    while(currentWeight <= attr.rangeValue[1]) {
+      weightList.push(Number(currentWeight.toFixed(1)));
+      currentWeight += 0.2;
+    }
+    attrWeightSet.push(weightList);
+  })
+  const cartesianProductResult = cartesianProduct(attrWeightSet);
+  cartesianProductResult.forEach((array) => {
+    let weightSum = 0;
+    array.forEach((value) => {
+      weightSum += value;
+    })
+    // normalize the weight to make sure the balance between the attributes
+    const normalizedArray = array.map((value) => Number((value / weightSum).toFixed(3)));
+    weightArray.value.push(normalizedArray);
+  })
+  console.log(weightArray.value);
+}
+
+// get recommendation
+const getRecom = async() => {
+  await setAttrWeight();
+  await applyCustomization();
+  drawerVisible1.value = false;
+  drawerVisible2.value = true;
+}
+
+// apply user customization
+const applyCustomization = async() => {
+  customDataString.value = '';
+  // lowCost = 10;
+  // upCost = 700;
+  attributes.value.forEach((attribute) => {
+    customDataString.value += `low${attribute.name} = ${attribute.lowBound};\n`;
+    customDataString.value += `up${attribute.name} = ${attribute.upBound};\n`;
+  })
+
+  // constraint TotalCost <= upCost /\ TotalCost >= lowCost;
+  customConstraintString.value = '';
+  attributes.value.forEach((attribute) => {
+    customConstraintString.value += `int: low${attribute.name};\n int: up${attribute.name};\n`;
+    customConstraintString.value += `constraint Total${attribute.name} <= up${attribute.name} /\\ Total${attribute.name} >= low${attribute.name};\n`;
+  })
+
+  let completeModel = modelString + dataString + customConstraintString.value + customDataString.value;
+
+  if (choices.value.length > 0) {
+    completeModel += choiceConstraint + choiceData.value;
+  }
+
+  try {
+    await solveModel(completeModel, customSolutions);
+  } catch (error) {
+    console.error('Error during applying customization:', error);
+  }
+
+  await solveDisModel(buildDisModel());
+  initialized = true;
+}
+
+// build distance model
+const buildDisModel = () => {
+  let completeDisModel = `int: nSolutions;\nint: nWeights;\n`;
+  let attrArrayString = '';
+  let attrWeightString = '';
+  let idealAttrString = '';
+  let boundString = '';
+  let disConstraintString = 'array[1..nWeights, 1..nSolutions] of var float: distance;\nconstraint\n  forall(w in 1..nWeights, i in 1..nSolutions) (\n    distance[w, i] =\n';
+
+  let completeDataString = `nSolutions = ${customSolutions.value.length};\nnWeights = ${weightArray.value.length};\n`;
+  let attrArrayData = '';
+  let boundData = '';
+  let idealAttrData = '';
+  let weightDataString = '';
+
+  attributes.value.forEach((attribute, attrIndex) => {
+    const attrName = `Total${attribute.name}`;
+    const name = attribute.name;
+
+    // === Declaration in the model ===
+    attrArrayString += `array[1..nSolutions] of float: ${attrName};\n`;
+    attrWeightString += `array[1..nWeights] of float: w${name};\n`;
+    idealAttrString += `float: ideal${name};\n`;
+    boundString += `float: max${name};\nfloat: min${name};\n`;
+
+    // === Calculation formula ===
+    const rangeExpr = `(max${name} - min${name})`;
+    const normExpr = `((Total${name}[i] - min${name}) / ${rangeExpr} - ideal${name})^2`;
+    disConstraintString += `      w${name}[w] * ${normExpr}`;
+    disConstraintString += (attrIndex < attributes.value.length - 1) ? ' +\n' : '\n  );\n';
+
+    // === Data ===
+    attrArrayData += `${attrName} = [${customSolutions.value.map(sol => sol[attrName]).join(', ')}];\n`;
+
+    const attrValues = customSolutions.value.map(sol => sol[attrName]);
+    const attrMaxValue = Math.max(...attrValues);
+    const attrMinValue = Math.min(...attrValues);
+
+    boundData += `max${name} = ${attrMaxValue};\nmin${name} = ${attrMinValue};\n`;
+    idealAttrData += `ideal${name} = ${attribute.operation === 'Maximize' ? 1 : 0};\n`;
+
+    weightDataString += `w${name} = [${weightArray.value.map(w => w[attrIndex].toFixed(3)).join(', ')}];\n`;
+  });
+
+  const outputString = `
+    solve satisfy;
+
+    output [
+      if w = 1 then "[" else ",\\n" endif ++
+      "[" ++ concat([ show(distance[w, i]) ++ if i < nSolutions then ", " else "]" endif | i in 1..nSolutions ])
+      ++ if w = nWeights then "]" else "" endif
+      | w in 1..nWeights
+    ];
+    `;
+
+  completeDisModel += attrArrayString + attrWeightString + idealAttrString + boundString + disConstraintString + outputString;
+  completeDataString += attrArrayData + boundData + idealAttrData + weightDataString;
+
+  return completeDisModel + completeDataString;
+};
+
+
+// solve the Distance Model
+const solveDisModel = async(model) => {
+  disArray.value = [];
+
+  console.log('completeModel', model);
+  await solveModel(model, disArray);
+
+  if (disArray.value.length === 0) {
+    console.error('No solution found for the distance model');
+    return;
+  }
+
+  const solutionHashMap = new Map();
+
+  const distanceMatrix = disArray.value[0].distance; // 2D array: distance[w][i]
+
+  for (let w = 0; w < weightArray.value.length; w++) {
+    const distanceList = distanceMatrix[w];
+
+    const sortedIndices = distanceList
+      .map((distance, index) => ({ distance, index }))
+      .sort((a, b) => a.distance - b.distance)
+      .map(item => item.index);
+
+    const top3 = sortedIndices.slice(0, 3);
+
+    console.log(`top3 for weight group ${w}:`, top3);
+
+    top3.forEach((index) => {
+      solutionHashMap.set(index, (solutionHashMap.get(index) || 0) + 1);
+    });
+  }
+
+  console.log('solutionHashMap:', solutionHashMap);
+
+  const minIndexes = Array.from(solutionHashMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(item => item[0]);
+
+  const minIndexSet = new Set(minIndexes);
+  // recommendedSolutions.value = customSolutions.value.filter((solution, index) => minIndexSet.has(index));
+  // recommendedSolutions.value = customSolutions.value
+  // .map((solution, index) => ({
+  //   ...solution,
+  //   index, // add index attribute
+  // }))
+  // .filter((solution) => minIndexSet.has(solution.index))
+  // .map((solution) => ({
+  //   ...solution,
+  //   show: false, // add show attribute
+  // }));
+  recommendedSolutions.value = customSolutions.value
+  .map((solution, index) => {
+    const updatedSet = solution.chosen_prop.set.map(prop => {
+      // 原始 OptionX 转为索引
+      const optionIndex = parseInt(prop.c.replace('Option', ''));
+
+      // capture the sub option name
+      const name =
+        processData.value.processes?.[optionIndex - 1]?.subProcessArray?.[prop.e - 1]?.name || 'N/A';
+      // 遍历 e 数组，提取每个子选项的名称
+      // const displayNames = Array.isArray(prop.e)
+      //   ? prop.e.map(eIndex => processData.value.processes?.[optionIndex]?.subProcessArray?.[eIndex - 1]?.name || 'N/A')
+      //   : [processData.value.processes?.[optionIndex]?.subProcessArray?.[prop.e - 1]?.name || 'N/A'];
+
+
+      return {
+        ...prop,
+        c: optionIndex,     // set 'OptionX' to index
+        displayName: name   // add displayName
+        // displayNames
+      };
+    });
+
+    return {
+      ...solution,
+      index,
+      show: false,
+      chosen_prop: {
+        ...solution.chosen_prop,
+        set: updatedSet
+      }
+    };
+  })
+  .filter(solution => minIndexSet.has(solution.index));
 
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 // set the option solution
 const setProcessSolution = async () => {
   const optionLength = processData.value.processes.length;
   processSolution.value = [];
-  console.log(solutions.value);
+  // console.log(solutions.value);
 
   for (let i = 0; i < optionLength; i++) {
     const optSet = new Set();
@@ -136,7 +643,7 @@ const setProcessSolution = async () => {
       processSolution.value[optionIndex - 1].add(prop.e);
     })
   })
-  console.log('setPS', processSolution.value);
+  // console.log('setPS', processSolution.value);
 }
 
 // Gateway Data
@@ -179,7 +686,7 @@ const generateGWConstraint = () => {
 
   gwDataString.value += gateDependencies;
   gwDataString.value += gateOutgoings;
-  console.log('gwData:', gwDataString.value);
+  // console.log('gwData:', gwDataString.value);
   // localStorage.setItem('GWConstraint', JSON.stringify(GWConstraint.value));
 }
 
@@ -304,20 +811,9 @@ const dsReplenish = () => {
 };
 
 
-const solveModel = async () => {
+const solveModel = async (completeModel, solutionList) => {
   const model = new MiniZinc.Model();
-  model.addString(modelString);
-  model.addString(dataString);
-  if (choices.value.length > 0) {
-    model.addString(choiceConstraint);
-    model.addString(choiceData.value);
-  }
-
-  console.log('Model String:', modelString);
-  console.log('Data String:', dataString);
-
-  // let complete = modelString.value + completeData.value + customDataString.value + customConstraintString.value;
-  // sessionStorage.setItem('completeModel', complete);
+  model.addString(completeModel);
 
   if (!model) {
     console.error('Model is not loaded yet.');
@@ -333,12 +829,12 @@ const solveModel = async () => {
     });
 
     await new Promise((resolve, reject) => {
-      solutions.value = []; // clear the previous results
+      solutionList.value = []; // clear the previous results
 
       // parse the solutions
       solve.on('solution', solution => {
-        console.log('Solution:', solution.output.json);
-        solutions.value.push(solution.output.json);
+        // console.log('Solution:', solution.output.json);
+        solutionList.value.push(solution.output.json);
       });
 
       // listen to the solve status
@@ -363,13 +859,14 @@ const solveModel = async () => {
 
 // listen to the choices change
 watch(
-  choices.value,
+  choices,
   () => {
     if (initialized) {
       addConstraint();
       console.log('watch');
     }
   },
+  { deep: true }
 );
 
 const addConstraint = async () => {
@@ -397,8 +894,14 @@ const addConstraint = async () => {
   choiceData.value += '};\n';
   console.log(choiceData.value);
 
+  let completeModel = modelString + dataString;
+
+  if (choices.value.length > 0) {
+    completeModel += choiceConstraint + choiceData.value;
+  }
+
   try {
-    await solveModel();
+    await solveModel(completeModel, solutions);
     checkResultStatus();
   } catch (error) {
     console.error('Error during adding constraint:', error);
@@ -425,21 +928,21 @@ const updateLastChoice = async (option, property) => {
 // promption message for no solution
 const noSolution = async () => {
   await updateLastChoice(lastChoice.value.option, lastChoice.value.property);
-  if (choices.value[lastChoice.value.option].length > processes.value[lastChoice.value.option].choiceNum) {
-    messageApi.info(`You can only choose ${processes.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
+  if (choices.value[lastChoice.value.option].length > processData.value.processes[lastChoice.value.option].choiceNum) {
+    messageApi.info(`You can only choose ${processData.value.processes[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
     // console.log(`You can only choose ${processes.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
   } else {
     let dependencyAlert = '';
     let depListAlert = '';
     messageApi.info('This property cannot coexist with your previous selection. Please try others.');
-    if (processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.length > 0){
+    if (processData.value.processes[lastChoice.value.option].properties[lastChoice.value.property].depLists.length > 0){
       depListAlert = 'For this property, you can choose:\n';
-      processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.forEach(depList => {
+      processData.value.processes[lastChoice.value.option].properties[lastChoice.value.property].depLists.forEach(depList => {
         depListAlert += `Dependency List: ${depList.name}: `;
         depList.dependencies.forEach((dep) => {
           depListAlert += `Option${dep.option}(${dep.propertyText}) `;
         })
-        if (depList !== processes.value[lastChoice.value.option].properties[lastChoice.value.property].depLists.slice(-1)[0]) {
+        if (depList !== processData.value.processes[lastChoice.value.option].properties[lastChoice.value.property].depLists.slice(-1)[0]) {
           depListAlert += ';\n';
         }
       })
@@ -451,7 +954,14 @@ const noSolution = async () => {
 }
 
 
+
+
 //////////////////////////////Page Control////////////////////////////////////
+
+// character and number transformer
+const transformer = (number) => {
+  return String.fromCharCode(65 + number );
+}
 
 // Page visibility
 const setTotalPage = () => {
@@ -486,6 +996,53 @@ const selectSubProcess = (index, subIndex) => {
   selectedSubProcess.value = processData.value.processes[index].subProcessArray[subIndex];
   currentProcess.value[0] = index;
   currentProcess.value[1] = subIndex;
+}
+
+const newTempt = () => {
+  const template = {
+    id: attributeTemplates.value.length + 1,
+    name: '',
+    description: '',
+    show: false,
+    attrInfo: []
+  }
+  attributes.value.forEach(attr => {
+    // const newAttribute = {
+    //   attrName: attr.name,
+    //   value: 1,
+    //   valueDesc: ['', '', '', '', ''],
+    //   valueExplan: ['', '', '', '', '']
+    // }
+    const newAttribute = {
+      attrName: attr.name,
+      rangeValue: [1, 5],
+      rangeDesc: '',
+      rangeExplan: ''
+    }
+    template.attrInfo.push(newAttribute);
+  })
+  newAttrTempt.value = template;
+  DiaVisible.value = true;
+}
+
+const clearDialog = () => {
+  newAttrTempt.value.name = '';
+  newAttrTempt.value.description = '';
+  newAttrTempt.value.attrInfo.forEach(attr => {
+    // attr.value = 1;
+    // attr.valueDesc = ['', '', '', '', ''];
+    // attr.valueExplan = ['', '', '', '', ''];
+    attr.rangeValue = [1, 5];
+    attr.rangeDesc = '';
+    attr.rangeExplan = '';
+  })
+}
+
+const saveAttrTempt = () => {
+  attributeTemplates.value.push(newAttrTempt.value);
+  newAttrTempt.value = null;
+  DiaVisible.value = false;
+  localStorage.setItem('attributeTemplates', JSON.stringify(attributeTemplates.value));
 }
 
 // Function to go to the previous page
@@ -533,7 +1090,8 @@ const saveProcess = async() => {
     },
     gateways: gateways.value,
     events: events.value,
-    processAttr: attributes.value
+    processAttr: attributes.value,
+    attributesTemplate: attributeTemplates.value
   }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -568,6 +1126,7 @@ const importProcess = async(file) => {
           attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
           events.value = importedData.events;
+          attributeTemplates.value = importedData.attributeTemplate;
 
           console.log('Data imported successfully:', importedData);
 
@@ -598,7 +1157,8 @@ const importProcess = async(file) => {
     attrString = '';
     gwDataString.value = '';
     dsReplenish();
-    solveModel();
+    let completeModel = modelString + dataString;
+    solveModel(completeModel, solutions);
     choiceArrayCreate();
     setProcessSolution();
   }
@@ -616,8 +1176,7 @@ watch(processData.value.processes, (newVal) => {
   }
 }, { deep: true });
 
-onMounted(async() => {
-  await nextTick();
+onMounted( async() => {
   const typeStorage = JSON.parse(localStorage.getItem('type'));
   if (typeStorage) {
     processData.value.type = typeStorage;
@@ -628,6 +1187,7 @@ onMounted(async() => {
     attributes.value = processDataStorage.processAttr;
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
+    attributeTemplates.value = processDataStorage.attributeTemplates;
     if (processData.value.processes.length > 0) {
       selectedProcess.value = processData.value.processes[0];
       lastProcess.value[0] = 0;
@@ -641,9 +1201,12 @@ onMounted(async() => {
     }
   }
 
+  setTotalPage();
+
   dsReplenish();
+  let completeModel = modelString + dataString;
   try {
-    await solveModel();
+    await solveModel(completeModel, solutions);
   } catch (error) {
     console.error('Error during solving:', error);
   }
@@ -656,6 +1219,11 @@ onMounted(async() => {
 </script>
 
 <style scoped>
+.playbook-container {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
 .left-bar {
   width: 30%;
   max-height: 85vh;
@@ -683,5 +1251,136 @@ onMounted(async() => {
   height: 100%;
   align-items: flex-start;
   position: relative;
+}
+
+.floating-button {
+  position: fixed;
+  /* top: 50%; */
+  right: 14px;
+  transform: translateY(-50%);
+  z-index: 9999;
+  background-color: #eaeaea;
+  color: black;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.template-area {
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 30px;
+  background-color: #f1f1f1;
+}
+
+.template-card {
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.template-card:hover {
+  background-color: #f5f5f5;
+}
+
+.template-card.selected {
+  border: 2px solid #1677ff;
+  background-color: #e6f4ff;
+}
+
+.section {
+  margin-bottom: 20px;
+  background-color: #b0b0b026;
+}
+
+.section-area {
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+  max-width: 800px;
+  min-width: 90vh;
+  margin-bottom: 30px;
+  background-color: #f1f1f1;
+}
+
+.section-description {
+  width: 100%;
+  max-width: 800px;
+}
+
+.quill-card {
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.section-title {
+  margin-bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.slider-space {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.slider-value{
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+:deep(.costom-slider .p-slider-range) {
+  background: #000000 !important;
+}
+
+:deep(.costom-slider .p-slider-handle) {
+  background: #000000 !important;
+  border-color: #2d2d2d !important;
+}
+
+:deep(.costom-slider) {
+  background: #a2a2a2;
+}
+
+.props-container {
+  display: flex;
+  flex-wrap: wrap; /* if there is too much content, allow line change */
+  gap: 1rem; /* set line gap */
+}
+
+.prop {
+  display: block; /* make each item in a line */
+  margin-right: 1rem; /* set spacing to keep it neat */
+  padding: 0.5rem; /* optional: set internal padding */
+  border: 1px solid #ccc; /* optional: add border to each item */
+  border-radius: 4px; /* optional: rounded border */
+}
+
+ul {
+  margin: 0;
+}
+
+.drop-down-button {
+  height: 24px;
+  width: 28px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
 }
 </style>

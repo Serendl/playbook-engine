@@ -81,7 +81,7 @@
 
 <script setup>
 import router from '@/router';
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import * as MiniZinc from 'minizinc';
 import GWConstraint from '@/model/Gateconstraint.txt?raw';
 
@@ -96,6 +96,7 @@ const processData = ref([]);
 const gateways = ref([]);
 const events = ref([]);
 const isLinear = ref('false')
+const attributeTemplates = ref([]);
 
 // const completeData = ref('');
 
@@ -261,8 +262,8 @@ const addAttribute = () => {
     name: attrName.value,
     type: 'int',
     index: 0,
-    lowBound: 0,
-    upBound: 0,
+    lowBound: "",
+    upBound: "",
     operation: ''
   }
   attributes.value.push(newAttr);
@@ -298,14 +299,16 @@ const saveProcess = async() => {
     gateways: gateways.value,
     events: events.value,
     processAttr: attributes.value,
-    linear: isLinear
+    linear: isLinear,
+    attributeTemplates: attributeTemplates.value
   }
   localStorage.setItem('processData', JSON.stringify(data));
 
   if (attributes.value.length > 0) {
     router.push('/AttrTemplate');
   } else {
-    router.push('/ConfiguratorPlaybook');
+    // router.push('/ConfiguratorPlaybook');
+    router.push('/Playbook');
   }
   console.log(1);
 };
@@ -337,7 +340,7 @@ const triggerFileUpload = () => {
   fileInput.value.click();
 };
 
-// // Function to import a model from a JSON file
+// Function to import a model from a JSON file
 const importModel = (event) => {
   const file = event.target.files[0];
 
@@ -358,6 +361,7 @@ const importModel = (event) => {
           gateways.value = importedData.gateways;
           events.value = importedData.events;
           isLinear.value = importedData.linear;
+          attributeTemplates.value = importedData.attributeTemplates;
 
           console.log('Data improted successfully:', importedData);
         } else {
@@ -420,7 +424,6 @@ const solveModel = async () => {
 };
 
 onMounted(async() => {
-  await nextTick();
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));
   const gwDataStorage = JSON.parse(localStorage.getItem('GWConstraint'));
 
@@ -430,6 +433,7 @@ onMounted(async() => {
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
     isLinear.value = processDataStorage.linear;
+    attributeTemplates.value = processDataStorage.attributeTemplates;
   }
 
   if (gwDataStorage) {
