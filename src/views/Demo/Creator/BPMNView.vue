@@ -158,8 +158,8 @@ function generateProcess() {
         name: el.name || '',
         incoming: [],
         outgoing: [],
-        lowChoiceNum: 0,
-        upChoiceNum: 0,
+        lowChoiceNum: 1,
+        upChoiceNum: 1,
         subProcessArray: [],
         show: false,
         description: ''
@@ -196,7 +196,8 @@ function generateProcess() {
     gateways: Object.values(gatewayMap),
     events: Object.values(eventMap),
     processAttr: [],
-    linear: isLinear
+    linear: isLinear,
+    attributeTemplates: []
   }
 
   localStorage.setItem('processData', JSON.stringify(result))

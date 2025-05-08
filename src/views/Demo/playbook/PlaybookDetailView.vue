@@ -3,6 +3,14 @@
     <div class="mt-3" style="width: 100%;">
       <div v-if="selectedProcess">
         <h1>Process {{ props.currentProcess[0] + 1 }}. {{ localProcess.name }}</h1>
+        <!-- <div class="text-end">
+          <button
+            @click="onClick"
+            class="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700"
+          >
+            <FileImageOutlined style="font-size: 20px" />
+          </button>
+        </div> -->
       </div>
       <div v-if="localSubProcess">
         <h2>{{ getPrefix() }}</h2>
@@ -34,6 +42,35 @@
                 </div>
               </div>
             </div>
+
+            <div v-if="localSubProcess.attributeArray.length > 0 " class="section-area">
+              <h3>Value Define Panel</h3>
+              <div v-for="(attr, index) in localSubProcess.attributeArray" :key="index">
+                <div class="section quill-card">
+                  <div class="section-title" style="align-items: baseline;">
+                    <h5 type="text" class="me-2" placeholder="Value Title">{{ attr.title }}</h5>
+                  </div>
+                  <div class="section-description">
+                    <!-- <input type="text" class="form-control" v-model="attr.description" placeholder="Value Description"> -->
+                    <!-- <textarea v-model="attr.description" rows="5" class="form-control" placeholder="Value Description"></textarea> -->
+                    <p>{{ attr.description }}</p>
+                  </div>
+
+                  <div class="slider-area">
+                    <SliderComp v-model="attr.value" :min="1" :max="5" class="w-56 slider-space costom-slider"></SliderComp>
+                    <div class="slider-info">
+                      <div class="slider-value">
+                        <!-- <input type="text" class="form-control me-2" v-model="attr.valueDesc[attr.value - 1]" placeholder="Value Description" style="width: 200px;"> -->
+                        <p style="font-size: 20px">{{ attr.valueDesc[attr.value - 1] }} ({{ attr.value }})</p>
+                      </div>
+                      <!-- <input type="text" class="form-control" v-model="attr.valueExplan[attr.value - 1 ]" placeholder="Value Explanation"> -->
+                      <!-- <textarea v-model="attr.valueExplan[attr.value - 1 ]" rows="3" class="form-control" placeholder="Value Explanation"></textarea> -->
+                      <p>{{ attr.valueExplan[attr.value - 1 ] }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-else class="description quill-card">
@@ -54,17 +91,11 @@
 
     </div>
   </div>
-
-  <button
-    @click="handleClick"
-    class="fixed right-6 bottom-6 z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700"
-  >
-  <FileImageOutlined />
-  </button>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+
 // import Quill from 'quill';
 
 const props = defineProps({
@@ -102,7 +133,7 @@ const localSubProcess = computed({
 
 const getPrefix = () => {
   if (props.type === 'Text Playbook') {
-    return  'SubProcess' + props.currentProcess[1] + '' + localSubProcess.value.name;
+    return  'SubProcess' + (props.currentProcess[1] + 1) + ' ' + localSubProcess.value.name;
   }
   if (props.type === 'Configurator Playbook') {
     return  'Option' + ' ' + String.fromCharCode(65 + props.currentProcess[1]) + '. ' + localSubProcess.value.name;

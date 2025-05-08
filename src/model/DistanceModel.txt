@@ -1,0 +1,6 @@
+
+solve satisfy;
+
+output [
+  show(distance)
+];

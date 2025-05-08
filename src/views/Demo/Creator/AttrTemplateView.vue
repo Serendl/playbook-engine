@@ -12,31 +12,44 @@
 
       <div class="process-detail">
 
-        <div v-for="(attrTemplate, index) in attrTemplates" :key="index" class="align-items-center section-area">
-          <h4 class="d-flex align-items-center mb-2">
-            <div class="me-2">
-              <button v-if="attrTemplate.show" @click="expand(index)" class="drop-down-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <g>
-                        <path fill="none" d="M0 0h24v24H0z"/>
-                        <path d="M12 15l-4.243-4.243 1.415-1.414L12 12.172l2.828-2.829 1.415 1.414z"/>
-                    </g>
-                </svg>
-              </button>
-              <button v-else @click="expand(index)" class="drop-down-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <g>
-                        <path fill="none" d="M0 0h24v24H0z"/>
-                        <path d="M12.172 12L9.343 9.172l1.414-1.415L15 12l-4.243 4.243-1.414-1.415z"/>
-                    </g>
+        <div v-for="(attrTemplate, index) in attributeTemplates" :key="index" class="align-items-center section-area">
+          <h4 class="section-title mb-2">
+            <div class="d-flex align-items-center">
+              <div class="me-2">
+                <button v-if="attrTemplate.show" @click="expand(index)" class="drop-down-button">
+                  <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <g>
+                          <path fill="none" d="M0 0h24v24H0z"/>
+                          <path d="M12 15l-4.243-4.243 1.415-1.414L12 12.172l2.828-2.829 1.415 1.414z"/>
+                      </g>
+                  </svg>
+                </button>
+                <button v-else @click="expand(index)" class="drop-down-button">
+                  <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <g>
+                          <path fill="none" d="M0 0h24v24H0z"/>
+                          <path d="M12.172 12L9.343 9.172l1.414-1.415L15 12l-4.243 4.243-1.414-1.415z"/>
+                      </g>
+                  </svg>
+                </button>
+              </div>
+              Model {{ index + 1 }}
+            </div>
+            <div>
+              <button @click="deleteTemplate(index)" class="delete-button ms-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
             </div>
-            Model {{ index + 1 }}
           </h4>
           <div v-show="attrTemplate.show" class="align=itmes-center">
             <div class="d-flex align-items-center mb-1" style="align-items: baseline;">
-              <input v-model="attrTemplate.name" class="form-control mb-3" placeholder="Value Template Name" style="width: 200px;" />
+              <input v-model="attrTemplate.name" class="form-control mb-2" placeholder="Value Template Name" style="width: 200px;" />
             </div>
             <div class="section-description">
               <textarea v-model="attrTemplate.description" rows="3" class="form-control mb-3" placeholder="Value Description"></textarea>
@@ -45,27 +58,36 @@
               <div class="section quill-card">
                 <div class="section-title" style="align-items: baseline;">
                   <h4 class="section-title"> {{ attr.attrName}}</h4>
-                  <div>
-                    <button @click="deleteTemplate(index)" class="delete-button ms-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
                 </div>
 
+                <!-- Range Value Slider -->
                 <div class="slider-area">
-                  <SliderComp v-model="attr.value" :min="1" :max="5" class="w-56 slider-space costom-slider"></SliderComp>
-                  <div class="slider-info">
-                    <div class="slider-value">
-                      <input type="text" class="form-control me-2" v-model="attr.valueDesc[attr.value - 1]" placeholder="Value Description" style="width: 200px;">
-                      <p>({{ attr.value }})</p>
+                  <SliderComp
+                    v-model="attr.rangeValue"
+                    :min="1"
+                    :max="5"
+                    :range="true"
+                    class="w-56 slider-space custom-slider"
+                  />
+
+                  <div class="slider-info mt-2">
+                    <div class="slider-value d-flex align-items-center">
+                      <input
+                        type="text"
+                        class="form-control me-2"
+                        v-model="attr.rangeDesc"
+                        placeholder="Value Range Description"
+                        style="width: 200px;"
+                      >
+                      <p>({{ attr.rangeValue[0] }} - {{ attr.rangeValue[1] }})</p>
                     </div>
-                    <textarea v-model="attr.valueExplan[attr.value - 1 ]" rows="3" class="form-control" placeholder="Value Explanation"></textarea>
+
+                    <textarea
+                      v-model="attr.rangeExplan"
+                      rows="3"
+                      class="form-control"
+                      placeholder="Range Explanation"
+                    ></textarea>
                   </div>
                 </div>
               </div>
@@ -73,7 +95,7 @@
           </div>
         </div>
       </div>
-      <div v-if="attrTemplates.length > 0" class="button-line">
+      <div class="button-line">
         <button @click="saveProcess" class="btn btn-primary text-end">Save Process</button>
       </div>
     </div>
@@ -95,14 +117,14 @@ const gateways = ref([]);
 const events = ref([]);
 let isLinear = true;
 
-const initialized = ref(false);
+let initialized = false;
 
-const attrTemplates = ref([]);
+const attributeTemplates = ref([]);
 
 const fileInput = ref(null);
 
 const expand = (index) => {
-  attrTemplates.value[index].show = !attrTemplates.value[index].show;
+  attributeTemplates.value[index].show = !attributeTemplates.value[index].show;
 }
 
 const saveModel = async() => {
@@ -115,7 +137,7 @@ const saveModel = async() => {
     events: events.value,
     processAttr: attributes.value,
     linear: isLinear.value,
-    attributeTemplates: attrTemplates.value
+    attributeTemplates: attributeTemplates.value
   }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -140,11 +162,11 @@ const saveProcess = async() => {
     events: events.value,
     processAttr: attributes.value,
     linear: isLinear,
-    attributeTemplate: attrTemplates.value
+    attributeTemplates: attributeTemplates.value
   }
   localStorage.setItem('processData', JSON.stringify(data));
 
-  router.push('/ConfiguratorPlaybook');
+  router.push('/Playbook');
 
   console.log(1);
 };
@@ -174,7 +196,7 @@ const importModel = (event) => {
           gateways.value = importedData.gateways;
           events.value = importedData.events;
           isLinear.value = importedData.linear;
-          attrTemplates.value = importedData.attributeTemplates;
+          attributeTemplates.value = importedData.attributeTemplates;
 
           console.log('Data improted successfully:', importedData);
         } else {
@@ -197,35 +219,48 @@ onMounted(async() => {
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
     isLinear = processDataStorage.linear;
+    attributeTemplates.value = processDataStorage.attributeTemplates;
+    // if (processDataStorage.attributeTemplates) {
+    //   attrTemplates.value = processDataStorage.attributeTemplates;
+    // } else {
+    //   attrTemplates.value = [];
+    // }
+    initialized = true;
   }
 
-  initialized.value = true;
+
 })
 
 const addTemplate = () => {
-  initialized.value = false;
+  initialized = false;
   const template = {
-    id: attrTemplates.value.length + 1,
+    id: attributeTemplates.value.length + 1,
     name: '',
     description: '',
-    show: false,
+    show: true,
     attrInfo: []
   }
   attributes.value.forEach(attr => {
+    // const newAttribute = {
+    //   attrName: attr.name,
+    //   value: 1,
+    //   valueDesc: ['', '', '', '', ''],
+    //   valueExplan: ['', '', '', '', '']
+    // }
     const newAttribute = {
       attrName: attr.name,
-      value: 1,
-      valueDesc: ['', '', '', '', ''],
-      valueExplan: ['', '', '', '', '']
+      rangeValue: [1, 5],
+      rangeDesc: '',
+      rangeExplan: ''
     }
     template.attrInfo.push(newAttribute);
   })
-  attrTemplates.value.push(template);
-  initialized.value = true;
+  attributeTemplates.value.push(template);
+  initialized = true;
 }
 
 const deleteTemplate = (index) => {
-  attrTemplates.value.attributeArray.splice(index, 1);
+  attributeTemplates.value.splice(index, 1);
 }
 
 </script>
@@ -347,16 +382,16 @@ const deleteTemplate = (index) => {
   margin-bottom: 10px;
 }
 
-:deep(.costom-slider .p-slider-range) {
+:deep(.custom-slider .p-slider-range) {
   background: #000000 !important;
 }
 
-:deep(.costom-slider .p-slider-handle) {
+:deep(.custom-slider .p-slider-handle) {
   background: #000000 !important;
   border-color: #2d2d2d !important;
 }
 
-:deep(.costom-slider) {
+:deep(.custom-slider) {
   background: #a2a2a2;
 }
 

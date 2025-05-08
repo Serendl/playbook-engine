@@ -9,7 +9,6 @@
         <ProStructure
           :processData="processData"
           @expand="expand"
-          @addProcess="addProcess"
           @addSubProcess="addSubProcess"
           @selectProcess="selectProcess"
           @selectSubProcess="selectSubProcess"
@@ -21,6 +20,7 @@
       <div class="processDetial">
         <ProDetailView
           v-if="processData.processes.length > 0"
+          :processData="processData"
           :selectedProcess="selectedProcess"
           :selectedSubProcess="selectedSubProcess"
           :currentProcess="currentProcess"
@@ -58,6 +58,7 @@ const attributes = ref([]);
 const gateways = ref([]);
 const events = ref([]);
 let isLinear = true;
+const attributeTemplates = ref([]);
 
 const selectedProcess = ref(null)
 const selectedSubProcess = ref(null)
@@ -125,32 +126,13 @@ const deleteSubProcess = (index, subIndex) => {
   setTotalPage();
 }
 
-// Function to add a process
-const addProcess = (proName) => {
-  const newProcess = {
-    name: proName,
-    id: processData.value.processes.length + 1,
-    lowChoiceNum: 1,
-    upChoiceNum: 1,
-    subProcessArray: [],
-    show: false,
-    description: ''
-  }
-  processData.value.processes.push(newProcess);
-  if (processData.value.processes.length === 1) {
-    selectedProcess.value = processData.value.processes[0];
-    currentProcess.value[0] = 0;
-  }
-  setTotalPage();
-}
-
 // Function to add a subprocess
 const addSubProcess = (currentIndex, subProName) => {
   const newSubProcess = {
     name: subProName,
     id: processData.value.processes[currentIndex].subProcessArray.length + 1,
-    lowChoiceNum: 1,
-    upChoiceNum: 1,
+    // lowChoiceNum: 1,
+    // upChoiceNum: 1,
     show: false,
     description: '',
     sectionArray: [],
@@ -170,6 +152,9 @@ const selectProcess = (index) => {
   console.log(currentProcess.value);
   lastProcess.value = [...currentProcess.value.map((x) => x)];
   console.log(lastProcess.value);
+  // new trial
+  // await updateProcess(selectedProcess);
+  //
   selectedProcess.value = processData.value.processes[index];
   selectedSubProcess.value = null;
   currentProcess.value[0] = index;
@@ -179,6 +164,9 @@ const selectProcess = (index) => {
 
 // Function to select a subprocess
 const selectSubProcess = (index, subIndex) => {
+  // new trial
+  // await updateSubProcess();
+  //
   lastProcess.value = [...currentProcess.value.map((x) => x)];
   console.log(lastProcess.value);
   selectedProcess.value = processData.value.processes[index];
@@ -190,12 +178,14 @@ const selectSubProcess = (index, subIndex) => {
 // Function to update the process
 const updateProcess = (selectedProcess) => {
   processData.value.processes[lastProcess.value[0]] = selectedProcess;
+  // processData.value.processes[currentProcess.value[0]] = selectedProcess;
 }
 
 // Function to update the subprocess
 const updateSubProcess = () => {
   if (lastProcess.value[1] === -1) return;
   processData.value.processes[lastProcess.value[0]].subProcessArray[lastProcess.value[1]] = selectedSubProcess;
+  // processData.value.processes[currentProcess.value[0]].subProcessArray[currentProcess.value[1]] = selectedSubProcess;
 }
 
 // Function to go to the previous page
@@ -248,12 +238,34 @@ const nextStep = () => {
       gateways: gateways.value,
       events: events.value,
       processAttr: attributes.value,
-      linear: isLinear
+      linear: isLinear,
+      attributeTemplates: attributeTemplates.value
     }
     localStorage.setItem('processData', JSON.stringify(data));
 
+    const processMap = {};
+    const indexMap = {};
+    processData.value.processes.forEach((process, index) => {
+      processMap[process.id] = process;
+      indexMap[process.id] = index;
+    });
+
+    gateways.value.forEach((gateway) => {
+      gateway.incomingDetails = gateway.incoming.map(id => {
+        const proc = processMap[id];
+        proc.index = indexMap[id];
+        return proc;
+      })
+
+      gateway.outgoingDetails = gateway.outgoing.map(id => {
+        const proc = processMap[id];
+        proc.index = indexMap[id];
+        return proc;
+      })
+    })
+
     if (processData.value.type === 'Text Playbook') {
-      router.push('/textPlaybook');
+      router.push('/DefineAttr');
     } else if (processData.value.type === 'Configurator Playbook') {
       router.push('/DefineGateway');
     }
@@ -273,7 +285,8 @@ const saveProcess = async() => {
     gateways: gateways.value,
     events: events.value,
     processAttr: attributes.value,
-    linear: isLinear
+    linear: isLinear,
+    attributeTemplates: attributeTemplates.value
   }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -309,6 +322,8 @@ const importProcess = async(file) => {
           attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
           events.value = importedData.events;
+          isLinear = importedData.linear;
+          attributeTemplates.value = importedData.attributeTemplates;
 
           console.log('Data imported successfully:', importedData);
 
@@ -359,6 +374,7 @@ onMounted(async() => {
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
     isLinear = processDataStorage.linear;
+    attributeTemplates.value = processDataStorage.attributeTemplates;
     if (processData.value.processes.length > 0) {
       selectedProcess.value = processData.value.processes[0];
       lastProcess.value[0] = 0;

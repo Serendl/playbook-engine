@@ -64,9 +64,15 @@
                     <div class="depRow">
                       <div class="d-flex align-items-center">
                         <label class="me-2">Process:</label>
-                        <input type="text" class="form-control me-2" v-model="dep.process" placeholder="Process ID" style="width: 25%; height: 80%;">
+                        <!-- <input type="text" class="form-control me-2" v-model="dep.process" placeholder="Process ID" style="width: 25%; height: 80%;"> -->
+                        <select class="form-select me-2" v-model="dep.process" style="width: 25%; height: 80%;">
+                          <option v-for="(item, index) in props.processData.processes" :key="index" :value="index + 1">{{ item.name }}</option>
+                        </select>
                         <label class="me-2">SubPro:</label>
-                        <input type="text" class="form-control" v-model="dep.subPro" placeholder="SubPro ID" style="width: 25%; height: 80%;">
+                        <!-- <input type="text" class="form-control" v-model="dep.subPro" placeholder="SubPro ID" style="width: 25%; height: 80%;"> -->
+                        <select v-if="dep.process" class="form-select" v-model="dep.subPro" style="width: 25%; height: 80%;">
+                          <option v-for="(item, index) in props.processData.processes[dep.process - 1].subProcessArray" :key="index + 1" :value="index">{{ item.name }}</option>
+                        </select>
                       </div>
                       <div>
                         <button @click="deleteDep(depListIndex, depIndex)" class="delete-button">
@@ -94,12 +100,12 @@
                     <div>
                       <button @click="deleteSection(index)" class="delete-button ms-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
+                          <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -175,6 +181,10 @@ import { computed } from 'vue';
 // import Quill from 'quill';
 
 const props = defineProps({
+  processData: {
+    type: Object,
+    required: true
+  },
   selectedProcess: {
     type: Object,
     default: null
@@ -213,9 +223,10 @@ const localSubProcess = computed({
   }
 })
 
+
 const getPrefix = () => {
   if (props.type === 'Text Playbook') {
-    return  'SubProcess' + props.currentProcess[1] + '' + localSubProcess.value.name;
+    return  'SubProcess' + (props.currentProcess[1] + 1) + ' ' + localSubProcess.value.name;
   }
   if (props.type === 'Configurator Playbook') {
     return  'Option' + ' ' + String.fromCharCode(65 + props.currentProcess[1]) + '. ' + localSubProcess.value.name;
