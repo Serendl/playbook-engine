@@ -10,7 +10,7 @@
         <button @click="saveModel" class="btn btn-primary text-end">Save Model</button>
       </div>
 
-      <div class="process-detail">
+      <div v-if="initialized" class="process-detail">
 
         <div v-for="(attrTemplate, index) in attributeTemplates" :key="index" class="align-items-center section-area">
           <h4 class="section-title mb-2">
@@ -136,7 +136,7 @@ const saveModel = async() => {
     gateways: gateways.value,
     events: events.value,
     processAttr: attributes.value,
-    linear: isLinear.value,
+    linear: isLinear,
     attributeTemplates: attributeTemplates.value
   }
   const dataString = JSON.stringify(data, null, 2);
@@ -166,7 +166,7 @@ const saveProcess = async() => {
   }
   localStorage.setItem('processData', JSON.stringify(data));
 
-  router.push('/Playbook');
+  router.push('/playbook');
 
   console.log(1);
 };

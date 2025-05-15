@@ -241,13 +241,14 @@ import PlaybookStructure from './PlaybookStructureView.vue';
 import PlaybookDetailView from './PlaybookDetailView.vue';
 import ProEmptyView from '../Creator/ProEmptyView.vue';
 import GWConstraint from '@/model/Gateconstraint.txt?raw';
+import RMGWConstraint from '@/model/RMGateConstraint.txt?raw';
 import BasicModelString from '@/model/BasicModelString.txt?raw';
+import AllSolModelString from '@/model/AllSolModelString.txt?raw';
 import ChoiceConstraint from '@/model/ChoiceConstraint.txt?raw';
 import * as MiniZinc from 'minizinc';
 import { FileImageOutlined, SettingOutlined, PlusCircleOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 const [messageApi, contextHolder] = message.useMessage();
-// import router from '@/router';
 
 // recommendation setting drawer visible
 const drawerVisible1 = ref(false)
@@ -265,6 +266,8 @@ const processData = ref({
   type: '',
   processes: []
 })
+
+let isLinear = false;
 
 // opration list
 const operationList = ["Minimize", "Maximize"];
@@ -335,6 +338,9 @@ const processSolution = ref([]);
 // solutions from Minizinc
 const solutions = ref([]);
 
+// reachable solution
+const reachableSolution = ref([]);
+
 // attrWeight
 // [
 //   [0.2, 0.3, 0.5],
@@ -358,11 +364,17 @@ const recommendedSolutions = ref([]);
 
 // Model Strings
 const GWConstraintString = GWConstraint;
+const RMGWConstraintString = RMGWConstraint;
+
 
 let modelString = BasicModelString;
 let dataString = '';
+
+let allSolModelString = AllSolModelString;
+let allSolDataString = '';
 let attrString = '';
 const gwDataString = ref('');
+const allSolGWDataString = ref('');
 let choiceConstraint = ChoiceConstraint;
 
 // String of choice data
@@ -431,6 +443,9 @@ const setAttrWeight = () => {
 
 // get recommendation
 const getRecom = async() => {
+  // console.log(allSolModelString);
+  // await allSolDsReplenish();
+  // await addConstraint();
   await setAttrWeight();
   await applyCustomization();
   drawerVisible1.value = false;
@@ -454,14 +469,14 @@ const applyCustomization = async() => {
     customConstraintString.value += `constraint Total${attribute.name} <= up${attribute.name} /\\ Total${attribute.name} >= low${attribute.name};\n`;
   })
 
-  let completeModel = modelString + dataString + customConstraintString.value + customDataString.value;
+  let completeModel = allSolModelString + allSolDataString + customConstraintString.value + customDataString.value;
 
   if (choices.value.length > 0) {
     completeModel += choiceConstraint + choiceData.value;
   }
 
   try {
-    await solveModel(completeModel, customSolutions);
+    await solveModel(completeModel, customSolutions, true);
   } catch (error) {
     console.error('Error during applying customization:', error);
   }
@@ -537,7 +552,7 @@ const solveDisModel = async(model) => {
   disArray.value = [];
 
   console.log('completeModel', model);
-  await solveModel(model, disArray);
+  await solveModel(model, disArray, true);
 
   if (disArray.value.length === 0) {
     console.error('No solution found for the distance model');
@@ -587,13 +602,13 @@ const solveDisModel = async(model) => {
   recommendedSolutions.value = customSolutions.value
   .map((solution, index) => {
     const updatedSet = solution.chosen_prop.set.map(prop => {
-      // 原始 OptionX 转为索引
+      // original OptionX transformed to index
       const optionIndex = parseInt(prop.c.replace('Option', ''));
 
       // capture the sub option name
       const name =
         processData.value.processes?.[optionIndex - 1]?.subProcessArray?.[prop.e - 1]?.name || 'N/A';
-      // 遍历 e 数组，提取每个子选项的名称
+      // iterate through the subProcessArray to get the display name
       // const displayNames = Array.isArray(prop.e)
       //   ? prop.e.map(eIndex => processData.value.processes?.[optionIndex]?.subProcessArray?.[eIndex - 1]?.name || 'N/A')
       //   : [processData.value.processes?.[optionIndex]?.subProcessArray?.[prop.e - 1]?.name || 'N/A'];
@@ -637,21 +652,18 @@ const setProcessSolution = async () => {
     processSolution.value.push(optSet);
   }
 
-  solutions.value.forEach((solution) => {
-    solution.chosen_prop.set.forEach((prop) => {
-      const optionIndex = prop.c.match(/\d+/)[0];
-      processSolution.value[optionIndex - 1].add(prop.e);
-    })
+  reachableSolution.value[0].reachable_prop.set.forEach((prop) => {
+    const optionIndex = prop.c.match(/\d+/)[0];
+    processSolution.value[optionIndex - 1].add(prop.e);
   })
-  // console.log('setPS', processSolution.value);
 }
 
 // Gateway Data
 // gateway activity choosen number can be 0
-const generateGWConstraint = () => {
+const generateGWData = () => {
   // Gateway = Gate(1..1);
   const gateDefine = `Gateway = Gate(1..${gateways.value.length});`;
-  gwDataString.value += gateDefine + '\n';
+  allSolGWDataString.value += gateDefine + '\n';
 
   // gateDependencies = [(p: Option3(3), req: [Option1(3)])];
   // p: Option + 'outPro.index' + ('outPro.subPro.index')
@@ -684,12 +696,34 @@ const generateGWConstraint = () => {
     })
   })
 
-  gwDataString.value += gateDependencies;
-  gwDataString.value += gateOutgoings;
+  allSolGWDataString.value += gateDependencies;
+  allSolGWDataString.value += gateOutgoings;
   // console.log('gwData:', gwDataString.value);
   // localStorage.setItem('GWConstraint', JSON.stringify(GWConstraint.value));
 }
 
+const reachableGWData = () => {
+  // gateDependencies = [(p: Option3(3), req: [Option1(3)])];
+  // p: Option + 'outPro.index' + ('outPro.subPro.index')
+  // req: Option + 'selectedPro.index' + ('selectedOption')
+  let gateDependencies = 'gateDependencies = [';
+  gateways.value.forEach((gateway, index) => {
+    gateway.outgoingDetails.forEach((outProcess, outIndex) => {
+      outProcess.subProcessArray.forEach((outSub, outSubIndex) => {
+        // gateDependencies part
+        const gd = `(p: Option${outProcess.index + 1}(${outSubIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
+        gateDependencies += gd;
+        if ( index === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1 && outSubIndex === outProcess.subProcessArray.length - 1) {
+          gateDependencies += ']; \n';
+        } else {
+          gateDependencies += ',\n ';
+        }
+      })
+    })
+  })
+
+  gwDataString.value += gateDependencies;
+}
 
 const dsReplenish = () => {
   // Property = OptionA(1..3) ++ OptionB(1..3) ++ OptionC(1..3);
@@ -705,6 +739,62 @@ const dsReplenish = () => {
   })
 
   dataString += propTemplate;
+
+  // Dependencies (Unreachable Model)
+  let depTemplate = 'dependencies = [';
+  processData.value.processes.forEach((process, proIndex) => {
+    process.subProcessArray.forEach((subPro, subIndex) => {
+      if (subPro.depListArray.length > 0) {
+        subPro.depListArray.forEach((depList) => {
+          let depDeclare = `(p: Option${proIndex + 1}(${subIndex + 1}), req: [`;
+          depList.dependencies.forEach((listDep, index) => {
+            depDeclare += `Option${listDep.process}(${listDep.subPro})`;
+            if (index < depList.dependencies.length - 1) depDeclare += ', ';
+          });
+          depDeclare += '])';
+          depTemplate += depDeclare + ', \n';
+        });
+      }
+    });
+  });
+  depTemplate += '];\n';
+
+  dataString += depTemplate;
+
+  // Card Constraints
+  let cardTemplate = 'card = [';
+  processData.value.processes.forEach((process, proIndex) => {
+    let cardDeclare = `(props: Option${proIndex + 1}(1..${process.subProcessArray.length}), n: ${process.lowChoiceNum}..${process.upChoiceNum})`;
+    cardTemplate += cardDeclare + ', \n';
+  });
+  cardTemplate += '];\n';
+  dataString += cardTemplate;
+
+  // Gateway constraints and data
+  if (isLinear === false) {
+    reachableGWData();
+    modelString += RMGWConstraintString;
+    dataString += gwDataString.value;
+  }
+
+  console.log('Model String:', modelString);
+  console.log('Data String:', dataString);
+};
+
+const allSolDsReplenish = async() => {
+  // Property = OptionA(1..3) ++ OptionB(1..3) ++ OptionC(1..3);
+  let propTemplate = 'Property = ';
+  processData.value.processes.forEach((process, proIndex) =>{
+    let proDeclare = 'Option';
+    if (proIndex != processData.value.processes.length - 1) {
+      proDeclare += `${proIndex + 1}(1..${process.subProcessArray.length}) ++ `;
+    } else {
+      proDeclare += `${proIndex + 1}(1..${process.subProcessArray.length}); \n`;
+    }
+    propTemplate += proDeclare;
+  })
+
+  allSolDataString += propTemplate;
 
   // dependencies = [
   //   (p: OptionC(2), req: [OptionA(1), OptionB(2)]),
@@ -747,7 +837,7 @@ const dsReplenish = () => {
   });
   depTemplate += '];\n';
 
-  dataString += depTemplate;
+  allSolDataString += depTemplate;
 
   // card = [
   //   (props: OptionA(1..3), n: 1..1),
@@ -792,26 +882,32 @@ const dsReplenish = () => {
       attrDefine += `${attribute.type}: max${attribute.name} = sum(${attribute.name});\n`
       attrDefine += `var 0..max${attribute.name}: Total${attribute.name} ::output = sum(p in Property)(chosen[p]*${attribute.name}[p]);\n`
     })
-    modelString += attrDefine;
-    dataString += attrString;
+    allSolModelString += attrDefine;
+    allSolDataString += attrString;
   }
 
-  dataString += cardTemplate;
+  allSolDataString += cardTemplate;
 
 
   // Gateway constraints and data
-  if (processData.value.type === 'Configurator Playbook') {
-    generateGWConstraint();
-    modelString += GWConstraintString;
-    dataString += gwDataString.value;
+  if (isLinear === false) {
+    generateGWData();
+    allSolModelString += GWConstraintString;
+    allSolDataString += allSolGWDataString.value;
   }
 
-  // console.log('Model String:', modelString);
-  // console.log('Data String:', dataString);
+  console.log('Model String:', allSolModelString);
+  console.log('Data String:', allSolDataString);
+
+  // try {
+  //   await solveModel();
+  // } catch (error) {
+  //   console.error('Error during solving:', error);
+  // }
 };
 
 
-const solveModel = async (completeModel, solutionList) => {
+const solveModel = async (completeModel, solutionList, allSol) => {
   const model = new MiniZinc.Model();
   model.addString(completeModel);
 
@@ -824,18 +920,28 @@ const solveModel = async (completeModel, solutionList) => {
     const solve = model.solve({
       options: {
         solver: 'gecode',
-        'all-solutions': true,
+        'all-solutions': allSol,
       },
     });
 
     await new Promise((resolve, reject) => {
-      solutionList.value = []; // clear the previous results
+      if (allSol) {
+        solutionList.value = []; // clear the previous results
 
-      // parse the solutions
-      solve.on('solution', solution => {
-        // console.log('Solution:', solution.output.json);
-        solutionList.value.push(solution.output.json);
-      });
+        // parse the solutions
+        solve.on('solution', solution => {
+          // console.log('Solution:', solution.output.json);
+          solutionList.value.push(solution.output.json);
+        });
+      } else {
+        solutionList.value = []; // clear the previous results
+
+        // parse the solutions
+        solve.on('solution', solution => {
+          // console.log('Solution:', solution.output.json);
+          solutionList.value = [solution.output.json];
+        });
+      }
 
       // listen to the solve status
       solve.then(result => {
@@ -862,14 +968,14 @@ watch(
   choices,
   () => {
     if (initialized) {
-      addConstraint();
+      addChoiceConstraint();
       console.log('watch');
     }
   },
   { deep: true }
 );
 
-const addConstraint = async () => {
+const addChoiceConstraint = async () => {
   let choiceConstraintData = [];
   choices.value.forEach((choiceArray, i) => {
     let ccData = '';
@@ -896,12 +1002,15 @@ const addConstraint = async () => {
 
   let completeModel = modelString + dataString;
 
-  if (choices.value.length > 0) {
-    completeModel += choiceConstraint + choiceData.value;
-  }
+  completeModel += choiceData.value;
+
+  console.log('completeModel:', completeModel);
+  // if (choices.value.length > 0) {
+  //   completeModel += choiceConstraint + choiceData.value;
+  // }
 
   try {
-    await solveModel(completeModel, solutions);
+    await solveModel(completeModel, reachableSolution, false);
     checkResultStatus();
   } catch (error) {
     console.error('Error during adding constraint:', error);
@@ -910,12 +1019,12 @@ const addConstraint = async () => {
 
 // check minizinc result status
 const checkResultStatus = () => {
-  if (resultStatus.value === 'SATISFIED' || resultStatus.value === 'ALL_SOLUTIONS') {
-    // setSupportSolution();
-    setProcessSolution();
-  } else if (resultStatus.value === 'UNSATISFIABLE' || resultStatus.value === 'NO_SOLUTION') {
+  if (resultStatus.value === 'UNSATISFIABLE' || resultStatus.value === 'NO_SOLUTION') {
     console.log('Unsatisfied');
     noSolution();
+  } else {
+    // setSupportSolution();
+    setProcessSolution();
   }
 }
 
@@ -1154,11 +1263,11 @@ const importProcess = async(file) => {
     // console.log(processData.value);
     modelString = BasicModelString;
     dataString = '';
-    attrString = '';
+    // attrString = '';
     gwDataString.value = '';
     dsReplenish();
     let completeModel = modelString + dataString;
-    solveModel(completeModel, solutions);
+    solveModel(completeModel, solutions, true);
     choiceArrayCreate();
     setProcessSolution();
   }
@@ -1188,6 +1297,7 @@ onMounted( async() => {
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
     attributeTemplates.value = processDataStorage.attributeTemplates;
+    isLinear = processDataStorage.linear;
     if (processData.value.processes.length > 0) {
       selectedProcess.value = processData.value.processes[0];
       lastProcess.value[0] = 0;
@@ -1203,14 +1313,10 @@ onMounted( async() => {
 
   setTotalPage();
 
-  dsReplenish();
-  let completeModel = modelString + dataString;
-  try {
-    await solveModel(completeModel, solutions);
-  } catch (error) {
-    console.error('Error during solving:', error);
-  }
-  choiceArrayCreate();
+  allSolDsReplenish();
+  await dsReplenish();
+  await addChoiceConstraint();
+  await choiceArrayCreate();
   setProcessSolution();
 
   initialized = true;

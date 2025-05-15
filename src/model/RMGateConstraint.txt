@@ -1,0 +1,7 @@
+% Constraint: Dependencies created by gateway, have the same function with depencency chains, should also be followed as the dependency chains
+list of record(Property: p, list of Property: req): gateDependencies; 
+constraint forall(p in Property where length([0 | i in index_set(gateDependencies) where gateDependencies[i].p = p]) > 0) (
+    forall(i in index_set(gateDependencies) where p = gateDependencies[i].p) (
+      exists(r in gateDependencies[i].req) (reachable[r] = false)
+    ) -> reachable[p] = false
+);

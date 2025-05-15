@@ -95,7 +95,7 @@ const processData = ref([]);
 
 const gateways = ref([]);
 const events = ref([]);
-const isLinear = ref('false')
+let isLinear = false;
 const attributeTemplates = ref([]);
 
 // const completeData = ref('');
@@ -305,10 +305,10 @@ const saveProcess = async() => {
   localStorage.setItem('processData', JSON.stringify(data));
 
   if (attributes.value.length > 0) {
-    router.push('/AttrTemplate');
+    router.push('/attr-template');
   } else {
     // router.push('/ConfiguratorPlaybook');
-    router.push('/Playbook');
+    router.push('/playbook');
   }
   console.log(1);
 };
@@ -322,7 +322,7 @@ const saveModel = async() => {
     gateways: gateways.value,
     events: events.value,
     processAttr: attributes.value,
-    linear: isLinear.value
+    linear: isLinear
   }
   const dataString = JSON.stringify(data, null, 2);
   const blob = new Blob([dataString], { type: 'application/json' });
@@ -360,7 +360,7 @@ const importModel = (event) => {
           attributes.value = importedData.processAttr;
           gateways.value = importedData.gateways;
           events.value = importedData.events;
-          isLinear.value = importedData.linear;
+          isLinear = importedData.linear;
           attributeTemplates.value = importedData.attributeTemplates;
 
           console.log('Data improted successfully:', importedData);
@@ -432,7 +432,7 @@ onMounted(async() => {
     attributes.value = processDataStorage.processAttr;
     gateways.value = processDataStorage.gateways;
     events.value = processDataStorage.events;
-    isLinear.value = processDataStorage.linear;
+    isLinear = processDataStorage.linear;
     attributeTemplates.value = processDataStorage.attributeTemplates;
   }
 

@@ -93,7 +93,7 @@ const gateways = ref([]);
 
 const attributes = ref([]);
 const events = ref([]);
-let isLinear = true;
+let isLinear = false;
 const attributeTemplates = ref([]);
 
 const fileInput = ref(null);
@@ -216,7 +216,7 @@ const defineAttr = () => {
   // generate gateway constraints
   generateGWConstraint();
   localStorage.setItem('gateways', JSON.stringify(gateways.value));
-  router.push('/DefineAttr');
+  router.push('/define-attr');
 };
 
 onMounted(async() => {
@@ -234,27 +234,6 @@ onMounted(async() => {
     events.value = processDataStorage.events;
     isLinear = processDataStorage.linear;
     attributeTemplates.value = processDataStorage.attributeTemplates;
-
-    // const processMap = {};
-    // const indexMap = {};
-    // processData.value.processes.forEach((process, index) => {
-    //   processMap[process.id] = process;
-    //   indexMap[process.id] = index;
-    // });
-
-    // gateways.value.forEach((gateway) => {
-    //   gateway.incomingDetails = gateway.incoming.map(id => {
-    //     const proc = processMap[id];
-    //     proc.index = indexMap[id];
-    //     return proc;
-    //   })
-
-    //   gateway.outgoingDetails = gateway.outgoing.map(id => {
-    //     const proc = processMap[id];
-    //     proc.index = indexMap[id];
-    //     return proc;
-    //   })
-    // })
   }
 });
 </script>

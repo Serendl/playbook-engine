@@ -115,7 +115,7 @@ function generateProcess() {
   const definitions = modeler.getDefinitions()
   const process = definitions.rootElements.find(el => el.$type === 'bpmn:Process')
   if (!process) {
-    console.warn('未找到流程定义')
+    console.warn('Failed to find process element in BPMN XML')
     return
   }
 
@@ -126,7 +126,7 @@ function generateProcess() {
   const eventMap = {}
   let isLinear = true;
 
-  // 初始化 node, event 和 gateway 的结构
+  // Initialize the structure node, event and gateway
   for (const el of elements) {
     if (el.$type === 'bpmn:SequenceFlow') continue
 
@@ -141,7 +141,7 @@ function generateProcess() {
         outgoingDetails: []
       }
       gatewayMap[el.id] = gateWayBase
-      isLinear = 'false';
+      isLinear = false;
     } else if(el.$type === 'bpmn:StartEvent' || el.$type === 'bpmn:EndEvent') {
       const seEventBase = {
         id: el.id,
@@ -202,7 +202,7 @@ function generateProcess() {
 
   localStorage.setItem('processData', JSON.stringify(result))
 
-  router.push('/proCreator')
+  router.push('/pro-creator')
 }
 
 

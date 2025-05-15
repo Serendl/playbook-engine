@@ -26,117 +26,117 @@ import AttrTemplateView from '@/views/Demo/Creator/AttrTemplateView.vue'
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'home',
     component: HomeView
   },
   {
-    path: '/ProDeclare',
-    name: 'ProDeclare',
+    path: '/proDeclare',
+    name: 'proDeclare',
     component: ProDeclareView
   },
   {
-    path: '/FileUpload',
-    name: 'FileUpload',
+    path: '/file-upload',
+    name: 'file-upload',
     component: FileUploadView
   },
   {
-    path: '/ProGenerate',
-    name: 'ProGenerate',
+    path: '/pro-generate',
+    name: 'proGenerate',
     component: ProGenerateView
   },
   {
-    path: '/PGview',
-    name: 'PGview',
+    path: '/pg-view',
+    name: 'pg-view',
     component: PGView,
   },
   {
-    path: '/Process',
-    name: 'Process',
+    path: '/process',
+    name: 'process',
     component: ProcessView
   },
   {
-    path: '/nodeProcess',
-    name: 'nodeProcess',
+    path: '/node-process',
+    name: 'node-process',
     component: NodeProcessView
   },
   {
-    path: '/proTest',
-    name: 'proTest',
+    path: '/pro-test',
+    name: 'pro-test',
     component: ProTestView
   },
   {
-    path: '/proTest1',
-    name: 'proTest1',
+    path: '/pro-test1',
+    name: 'pro-test1',
     component: ProTest1View
   },
   {
-    path: '/proTest2',
-    name: 'proTest2',
+    path: '/pro-test2',
+    name: 'pro-test2',
     component: ProTest2View
   },
   {
-    path: '/proDefine',
-    name: 'proDefine',
+    path: '/pro-define',
+    name: 'pro-define',
     component: ProDefineView
   },
   {
-    path: '/proDefine1',
-    name: 'proDefine1',
+    path: '/pro-define1',
+    name: 'pro-define1',
     component: ProDefineView1
   },
   {
-    path: '/proDefine2',
-    name: 'proDefine2',
+    path: '/pro-define2',
+    name: 'pro-define2',
     component: ProDefineView2
   },
   {
-    path: '/proTest3',
-    name: 'proTest3',
+    path: '/pro-test3',
+    name: 'pro-test3',
     component: ProTest3View
   },
   {
-    path: '/proDefine3',
-    name: 'proDefine3',
+    path: '/pro-define3',
+    name: 'pro-define3',
     component: ProDefineView3
   },
   {
-    path: '/proTest4',
-    name: 'proTest4',
+    path: '/pro-test4',
+    name: 'pro-test4',
     component: ProTest4View
   },
   {
-    path: '/proCreator',
-    name: 'proCreator',
+    path: '/pro-creator',
+    name: 'pro-creator',
     component: ProCreator
   },
   {
-    path: '/proBPMN',
-    name: 'proBPMN',
+    path: '/pro-bpmn',
+    name: 'pro-bpmn',
     component: ProBPMNView
   },
   {
-    path: '/Playbook',
-    name: 'Playbook',
+    path: '/playbook',
+    name: 'playbook',
     component: PlaybookView
   },
   {
-    path: '/DefineAttr',
-    name: 'DefineAttr',
+    path: '/define-attr',
+    name: 'define-attr',
     component: DefineAttrView
   },
   {
-    path: '/ConfiguratorPlaybook',
-    name: 'ConfiguratorPlaybook',
+    path: '/configurator-playbook',
+    name: 'configurator-playbook',
     component: ConfiguratorView
   },
   {
-    path: '/DefineGateway',
-    name: 'DefineGateway',
+    path: '/define-gateway',
+    name: 'define-gateway',
     component: DefineGatewayView
   },
   {
-    path: '/AttrTemplate',
-    name: 'AttrTemplate',
+    path: '/attr-template',
+    name: 'attr-template',
     component: AttrTemplateView
   }
 ]

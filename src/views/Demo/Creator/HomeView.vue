@@ -57,7 +57,7 @@ const openDialog = () => {
 
 const customProcess = () => {
   localStorage.setItem('type', JSON.stringify(type.value));
-  router.push('/proBPMN');
+  router.push('/pro-bpmn');
   dialogVisible.value = false;
   type.value = 'Text Playbook';
 }
