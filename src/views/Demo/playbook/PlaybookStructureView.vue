@@ -45,10 +45,8 @@
                   @change="updateLastChoice(index, subIndex)"
                   :disabled="!localProcessSolution[index]?.has(subIndex + 1)"
                 />
-                <!-- <label :for="'option-' + index + '-property-' + subIndex" class="ms-2">{{ getPrefix(subIndex) }}: {{ subProcess.name }}</label> -->
 
                 <div @click="selectSubProcess(index, subIndex)" class="ms-2 process-name">
-                  <!-- {{ index + 1 }}.{{ subIndex + 1 }} {{ subprocess.name }} -->
                   {{ getPrefix(index, subIndex) }} {{ subProcess.name }}
                 </div>
               </div>
@@ -58,7 +56,6 @@
       </div>
 
       <div class="mb-3 button-line">
-        <!-- <button @click="nextStep()" class="btn btn-primary">Define Attributes</button> -->
       </div>
     </div>
   </div>
@@ -139,7 +136,6 @@ const getPrefix = (index, subIndex) => {
 
 .process-name-line {
   padding: 10px 0;
-  /* margin-bottom: 10px; */
   border-radius: 5px;
   align-items: baseline;
   width: 100%;
@@ -150,12 +146,9 @@ const getPrefix = (index, subIndex) => {
 }
 
 .delete-button {
-  /* height: 24px; */
-  /* width: 28px; */
   background-color: transparent;
   border-radius: 8px;
   border-color: grey;
-  /* border: none; */
   cursor: pointer;
 }
 
@@ -176,7 +169,6 @@ const getPrefix = (index, subIndex) => {
 }
 
 .subprocess-line {
-  /* background-color: rgba(168, 175, 175, 0.333); */
   padding: 5px 0;
   margin: 1px 0;
   border-radius: 5px;
