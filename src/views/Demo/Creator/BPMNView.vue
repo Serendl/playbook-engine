@@ -115,7 +115,7 @@ function generateProcess() {
   const definitions = modeler.getDefinitions()
   const process = definitions.rootElements.find(el => el.$type === 'bpmn:Process')
   if (!process) {
-    console.warn('未找到流程定义')
+    console.warn('Process not found in BPMN diagram')
     return
   }
 
@@ -124,9 +124,10 @@ function generateProcess() {
   const nodeMap = {}
   const gatewayMap = {}
   const eventMap = {}
-  let isLinear = true;
+  let isLinear = true
+  let index = 0;
 
-  // 初始化 node, event 和 gateway 的结构
+  // initiatae the structure of node, event and gateway
   for (const el of elements) {
     if (el.$type === 'bpmn:SequenceFlow') continue
 
@@ -138,7 +139,8 @@ function generateProcess() {
         incoming: [],
         outgoing: [],
         incomingDetails: [],
-        outgoingDetails: []
+        outgoingDetails: [],
+        pathsMap: {}
       }
       gatewayMap[el.id] = gateWayBase
       isLinear = 'false';
@@ -162,7 +164,8 @@ function generateProcess() {
         upChoiceNum: 1,
         subProcessArray: [],
         show: false,
-        description: ''
+        description: '',
+        index: index++,
       }
       nodeMap[el.id] = base
     }
@@ -188,6 +191,46 @@ function generateProcess() {
     }
   }
 
+  const idElementMap = { ...nodeMap, ...gatewayMap, ...eventMap }
+
+  for (const gatewayId in gatewayMap) {
+    const gateway = gatewayMap[gatewayId]
+    const pathsMap = {}
+
+    for (const outgoingId of gateway.outgoing) {
+      const rawPaths = tracePathsFrom(outgoingId, idElementMap)
+
+      const nodeIdSet = new Set()
+
+      for (const path of rawPaths) {
+        for (const id of path) {
+          if (Object.prototype.hasOwnProperty.call(nodeMap, id)) {
+            nodeIdSet.add(id)
+          }
+        }
+      }
+
+      pathsMap[outgoingId] = Array.from(nodeIdSet)
+    }
+
+    const allSets = Object.values(pathsMap).map(arr => new Set(arr));
+    if (allSets.length > 0) {
+      const commonIds = [...allSets[0]].filter(id =>
+        allSets.every(set => set.has(id))
+      );
+
+      for (const key in pathsMap) {
+        const filtered = new Set(pathsMap[key]);
+        for (const id of commonIds) filtered.delete(id);
+        pathsMap[key] = Array.from(filtered);
+      }
+    }
+
+    gateway.pathsMap = pathsMap
+  }
+
+
+
   const result = {
     process: {
       type: type,
@@ -205,7 +248,23 @@ function generateProcess() {
   router.push('/proCreator')
 }
 
+// Function to trace all paths from a given node ID
+function tracePathsFrom(id, idElementMap, visited = new Set()) {
+  if (visited.has(id)) return []  // prevent cycles
+  visited.add(id)
 
+  const node = idElementMap[id]
+  if (!node || !node.outgoing || node.outgoing.length === 0) return [[id]]
+
+  const paths = []
+  for (const nextId of node.outgoing) {
+    const subPaths = tracePathsFrom(nextId, idElementMap, new Set(visited)) // deep copy of visited
+    for (const sub of subPaths) {
+      paths.push([id, ...sub])
+    }
+  }
+  return paths
+}
 
 
 </script>

@@ -264,10 +264,10 @@ const nextStep = () => {
       })
     })
 
-    if (processData.value.type === 'Text Playbook') {
-      router.push('/DefineAttr');
-    } else if (processData.value.type === 'Configurator Playbook') {
+    if (gateways.value.length > 0) {
       router.push('/DefineGateway');
+    } else {
+      router.push('/DefineAttr');
     }
   } else {
     console.log('No process data');

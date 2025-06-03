@@ -8,9 +8,9 @@
       <div class="button-line">
         <div>
           <button @click="visible = true" class="btn btn-primary me-3">Add Option Attribute</button>
-          <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button>
-          <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
-          <button @click="saveModel" class="btn btn-primary text-end">Save Model</button>
+          <!-- <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button> -->
+          <!-- <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" /> -->
+          <!-- <button @click="saveModel" class="btn btn-primary text-end">Save Model</button> -->
         </div>
       </div>
 
@@ -19,8 +19,9 @@
         <div v-for="(process, index) in processData.processes" :key="index" class="process-item">
           <div class="name-delete">
             <div class="id-name-row" style="align-items: baseline;">
-              <p>ID: {{ index + 1 }} </p>
-              <label>Process Name: {{ process.name }}</label>
+              <!-- <label class="me-2">Process {{ index + 1 }}. </label> -->
+              <!-- <label>Process Name: {{ process.name }}</label> -->
+              <label>Process {{ index + 1 }}. {{ process.name }}</label>
               <label class="ms-5">Choice Number Range: </label>
               <input v-model="process.lowChoiceNum" placeholder="Low Choice Number" class="choice-number-input form-control" />
               <label class="ms-2">to</label>
@@ -32,7 +33,7 @@
             <hr class="my-4" />
             <div class="name-delete">
               <div class="id-name-row">
-                <label class="me-3">{{ getPrefix(subIndex) }}</label>
+                <label class="me-3">{{ getPrefix(subIndex) }}.</label>
                 <label>Name: {{subProcess.name}}</label>
               </div>
             </div>
@@ -260,7 +261,7 @@ const addAttribute = () => {
   });
   const newAttr = {
     name: attrName.value,
-    type: 'int',
+    type: 'float',
     index: 0,
     lowBound: "",
     upBound: "",
@@ -281,15 +282,15 @@ const deleteAttr = (attrIndex) => {
 
 const saveProcess = async() => {
   // complete the model string
-  dsReplenish();
+  // dsReplenish();
 
-  try{
-    await solveModel();
-    sessionStorage.setItem('allSolutions', JSON.stringify(solutions.value));
-    console.log('All solutions stored:', solutions.value);
-  } catch (error) {
-    console.error('Error during solving:', error);
-  }
+  // try{
+  //   await solveModel();
+  //   sessionStorage.setItem('allSolutions', JSON.stringify(solutions.value));
+  //   console.log('All solutions stored:', solutions.value);
+  // } catch (error) {
+  //   console.error('Error during solving:', error);
+  // }
 
   const data = {
     process: {
@@ -313,115 +314,115 @@ const saveProcess = async() => {
   console.log(1);
 };
 
-const saveModel = async() => {
-  const data = {
-    process: {
-      type: processData.value.type,
-      processes: processData.value.processes
-    },
-    gateways: gateways.value,
-    events: events.value,
-    processAttr: attributes.value,
-    linear: isLinear.value
-  }
-  const dataString = JSON.stringify(data, null, 2);
-  const blob = new Blob([dataString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+// const saveModel = async() => {
+//   const data = {
+//     process: {
+//       type: processData.value.type,
+//       processes: processData.value.processes
+//     },
+//     gateways: gateways.value,
+//     events: events.value,
+//     processAttr: attributes.value,
+//     linear: isLinear.value
+//   }
+//   const dataString = JSON.stringify(data, null, 2);
+//   const blob = new Blob([dataString], { type: 'application/json' });
+//   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'process.json';
-  a.click();
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = 'process.json';
+//   a.click();
 
-  URL.revokeObjectURL(url);
-};
+//   URL.revokeObjectURL(url);
+// };
 
-const triggerFileUpload = () => {
-  fileInput.value.click();
-};
+// const triggerFileUpload = () => {
+//   fileInput.value.click();
+// };
 
-// Function to import a model from a JSON file
-const importModel = (event) => {
-  const file = event.target.files[0];
+// // Function to import a model from a JSON file
+// const importModel = (event) => {
+//   const file = event.target.files[0];
 
-  if (file) {
-    const reader = new FileReader();
+//   if (file) {
+//     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
+//     reader.onload = (e) => {
+//       try {
+//         const importedData = JSON.parse(e.target.result);
 
-        // Check if the imported data has the required properties
-        if (
-          importedData
-        ) {
-          // load the imported data into the data variables
-          processData.value = importedData.process;
-          attributes.value = importedData.processAttr;
-          gateways.value = importedData.gateways;
-          events.value = importedData.events;
-          isLinear.value = importedData.linear;
-          attributeTemplates.value = importedData.attributeTemplates;
+//         // Check if the imported data has the required properties
+//         if (
+//           importedData
+//         ) {
+//           // load the imported data into the data variables
+//           processData.value = importedData.process;
+//           attributes.value = importedData.processAttr;
+//           gateways.value = importedData.gateways;
+//           events.value = importedData.events;
+//           isLinear.value = importedData.linear;
+//           attributeTemplates.value = importedData.attributeTemplates;
 
-          console.log('Data improted successfully:', importedData);
-        } else {
-          console.error('JSON file does not contain the required data.');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-      }
-    };
+//           console.log('Data improted successfully:', importedData);
+//         } else {
+//           console.error('JSON file does not contain the required data.');
+//         }
+//       } catch (error) {
+//         console.error('Import error:', error);
+//       }
+//     };
 
-    reader.readAsText(file);
-  }
-};
+//     reader.readAsText(file);
+//   }
+// };
 
 // click the solve button to solve the model
-const solveModel = async () => {
-  const model = new MiniZinc.Model();
-  console.log(modelString);
-  console.log(dataString);
-  model.addString(modelString);
-  model.addString(dataString);
-  if (!model) {
-    console.error('Model is not loaded yet.');
-    return;
-  }
+// const solveModel = async () => {
+//   const model = new MiniZinc.Model();
+//   console.log(modelString);
+//   console.log(dataString);
+//   model.addString(modelString);
+//   model.addString(dataString);
+//   if (!model) {
+//     console.error('Model is not loaded yet.');
+//     return;
+//   }
 
-  try {
-    const solve = model.solve({
-      options: {
-        solver: 'gecode',
-        'all-solutions': true,
-      },
-    });
+//   try {
+//     const solve = model.solve({
+//       options: {
+//         solver: 'gecode',
+//         'all-solutions': true,
+//       },
+//     });
 
-    await new Promise((resolve, reject) => {
-      solutions.value = []; // clear the previous results
+//     await new Promise((resolve, reject) => {
+//       solutions.value = []; // clear the previous results
 
-      // parse the solutions
-      solve.on('solution', solution => {
-        console.log('Solution:', solution.output.json);
-        solutions.value.push(solution.output.json);
-      });
+//       // parse the solutions
+//       solve.on('solution', solution => {
+//         console.log('Solution:', solution.output.json);
+//         solutions.value.push(solution.output.json);
+//       });
 
-      // listen to the solve status
-      solve.then(result => {
-        console.log('Solve Status:', result.status);
-        resolve(); // mark as success
-      });
+//       // listen to the solve status
+//       solve.then(result => {
+//         console.log('Solve Status:', result.status);
+//         resolve(); // mark as success
+//       });
 
-      // listen to the solve error
-      solve.on('error', error => {
-        console.error('Solve error:', error);
-        reject(error); // mark as error
-      });
-    });
-  } catch (error) {
-    console.error('Error during solving model:', error);
-    throw error;
-  }
-};
+//       // listen to the solve error
+//       solve.on('error', error => {
+//         console.error('Solve error:', error);
+//         reject(error); // mark as error
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error during solving model:', error);
+//     throw error;
+//   }
+// };
 
 onMounted(async() => {
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));

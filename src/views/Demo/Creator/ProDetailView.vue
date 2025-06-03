@@ -19,7 +19,7 @@
             <div class="button-line">
               <button @click="addDepList()" class="btn btn-primary me-3">+ Add Dependency List</button>
               <button @click="addSection()" class="btn btn-primary me-3">+ Add Section</button>
-              <button @click="addValuePanel()" class="btn btn-primary me-3">+ Add Value Define Panel</button>
+              <!-- <button @click="addValuePanel()" class="btn btn-primary me-3">+ Add Value Define Panel</button> -->
             </div>
 
             <div class="description quill-card">
@@ -117,7 +117,7 @@
               </div>
             </div>
 
-            <div v-if="localSubProcess.attributeArray.length > 0 " class="section-area">
+            <!-- <div v-if="localSubProcess.attributeArray.length > 0 " class="section-area">
               <h3>Value Define Panel</h3>
               <div v-for="(attr, index) in localSubProcess.attributeArray" :key="index">
                 <div class="section quill-card">
@@ -136,7 +136,6 @@
                     </div>
                   </div>
                   <div class="section-description">
-                    <!-- <input type="text" class="form-control" v-model="attr.description" placeholder="Value Description"> -->
                     <textarea v-model="attr.description" rows="5" class="form-control" placeholder="Value Description"></textarea>
                   </div>
 
@@ -147,13 +146,12 @@
                         <input type="text" class="form-control me-2" v-model="attr.valueDesc[attr.value - 1]" placeholder="Value Description" style="width: 200px;">
                         <p>({{ attr.value }})</p>
                       </div>
-                      <!-- <input type="text" class="form-control" v-model="attr.valueExplan[attr.value - 1 ]" placeholder="Value Explanation"> -->
                       <textarea v-model="attr.valueExplan[attr.value - 1 ]" rows="3" class="form-control" placeholder="Value Explanation"></textarea>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
 
           <div v-else class="description quill-card">
@@ -265,9 +263,9 @@ const addValuePanel = () => {
   localSubProcess.value.attributeArray.push(newAttribute);
 }
 
-const deleteValue = (index) => {
-  localSubProcess.value.attributeArray.splice(index, 1);
-}
+// const deleteValue = (index) => {
+//   localSubProcess.value.attributeArray.splice(index, 1);
+// }
 
 const addDepList = () => {
   const newDepList = {

@@ -1,0 +1,18 @@
+enum Property;
+
+array[Property] of var bool: chosen ::no_output;
+
+set of Property: chosen_prop ::output ::output_only = {p | p in Property where fix(chosen[p])};
+
+list of record(Property: p, list of Property: req): dependencies; 
+constraint forall(p in Property where length([0 | i in index_set(dependencies) where dependencies[i].p = p]) > 0) (
+  chosen[p] -> exists(i in index_set(dependencies) where dependencies[i].p = p) (
+    forall(r in dependencies[i].req) (chosen[r])
+  )
+);
+
+list of record(set of Property: props, set of int: n): card;
+constraint forall(i in index_set(card)) (
+  count(p in card[i].props)(chosen[p]) in card[i].n
+);
+
