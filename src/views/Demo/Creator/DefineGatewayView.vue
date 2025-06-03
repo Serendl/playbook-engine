@@ -5,26 +5,19 @@
 
     <div class="content-container">
       <!-- Add Process Section -->
-      <div class="button-line">
+      <!-- <div class="button-line">
         <div>
-          <!-- <button @click="addOption" class="btn btn-primary me-3">Add Option</button> -->
-          <!-- <button @click="addAttribute" class="btn btn-primary me-3">Add Property Attribute</button> -->
           <button @click="triggerFileUpload()" class="btn btn-primary me-3">Import</button>
           <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
           <button @click="saveModel()" class="btn btn-primary text-end">Save</button>
         </div>
-        <!-- <div>
-          <button @click="saveModel" class="btn btn-primary mt-3 text-end">Save Model</button>
-          <button @click="triggerFileUpload" class="btn btn-primary mt-3 ms-2">Import Model</button>
-          <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
-        </div> -->
-      </div>
+      </div> -->
 
       <div class="generate-process">
 
         <div v-for="(gateway, index) in gateways" :key="index" class="process-item">
           <div class="name-delete">
-            <div class="id-name-row" style="align-items: baseline;">
+            <div class="id-name-row " style="align-items: baseline;">
               <h4>Process Name: {{ gateway.name }}</h4>
               <p class="ms-3">Incoming Activity ID: {{ gateway.incomingDetails[index].id }} </p>
               <p class="ms-3">Incoming Activity Name: {{ gateway.incomingDetails[index].name }} </p>
@@ -38,7 +31,7 @@
             <div class="name-delete">
               <div class="id-name-row">
                 <div class="id-name-row row-part1">
-                  <label class="me-3">{{ getPrefix(outIndex) }}</label>
+                  <label class="me-2">{{ getPrefix(outIndex) }}</label>
                   <label>Name: {{outProcess.name}}</label>
                 </div>
                 <div class="id-name-row row-part2">
@@ -213,18 +206,24 @@ const importModel = (event) => {
 
 // Go to the next step
 const defineAttr = () => {
-  // generate gateway constraints
-  generateGWConstraint();
-  localStorage.setItem('gateways', JSON.stringify(gateways.value));
+  const data = {
+    process: {
+      type: processData.value.type,
+      processes: processData.value.processes
+    },
+    gateways: gateways.value,
+    events: events.value,
+    processAttr: attributes.value,
+    linear: isLinear,
+    attributeTemplates: attributeTemplates.value
+  }
+  localStorage.setItem('processData', JSON.stringify(data));
+
   router.push('/DefineAttr');
 };
 
 onMounted(async() => {
-  // const gatewayStorage = JSON.parse(localStorage.getItem('gateways'));
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));
-
-  // console.log('Gateway Storage:', gatewayStorage);
-  // console.log('Process Storage:', processStorage);
 
   if (processDataStorage) {
     gateways.value = processDataStorage.gateways;
@@ -235,26 +234,26 @@ onMounted(async() => {
     isLinear = processDataStorage.linear;
     attributeTemplates.value = processDataStorage.attributeTemplates;
 
-    // const processMap = {};
-    // const indexMap = {};
-    // processData.value.processes.forEach((process, index) => {
-    //   processMap[process.id] = process;
-    //   indexMap[process.id] = index;
-    // });
+    const processMap = {};
+    const indexMap = {};
+    processData.value.processes.forEach((process) => {
+      processMap[process.id] = process;
+      indexMap[process.id] = process.index;
+    });
 
-    // gateways.value.forEach((gateway) => {
-    //   gateway.incomingDetails = gateway.incoming.map(id => {
-    //     const proc = processMap[id];
-    //     proc.index = indexMap[id];
-    //     return proc;
-    //   })
+    gateways.value.forEach((gateway) => {
+      gateway.incomingDetails = gateway.incoming.map(id => {
+        const proc = processMap[id];
+        proc.index = indexMap[id];
+        return proc;
+      })
 
-    //   gateway.outgoingDetails = gateway.outgoing.map(id => {
-    //     const proc = processMap[id];
-    //     proc.index = indexMap[id];
-    //     return proc;
-    //   })
-    // })
+      gateway.outgoingDetails = gateway.outgoing.map(id => {
+        const proc = processMap[id];
+        proc.index = indexMap[id];
+        return proc;
+      })
+    })
   }
 });
 </script>
@@ -361,7 +360,7 @@ button:hover {
   display: flex;
   gap: 10px;
   align-items: center;
-  width: 20%;
+  width: 25%;
 }
 
 .row-part2 {

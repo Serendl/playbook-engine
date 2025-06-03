@@ -1,12 +1,12 @@
 <template>
   <div class="home">
-    <h1>Attribute Model Template</h1>
+    <h1>Recommendation Template</h1>
 
     <div v-if="attributes.length > 0" class="content-container">
       <div class="button-line">
         <button @click="addTemplate()" class="btn btn-primary me-3">+ Add Value Define Panel</button>
-        <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button>
-        <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
+        <!-- <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button> -->
+        <!-- <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" /> -->
         <button @click="saveModel" class="btn btn-primary text-end">Save Model</button>
       </div>
 
@@ -71,7 +71,7 @@
                   />
 
                   <div class="slider-info mt-2">
-                    <div class="slider-value d-flex align-items-center">
+                    <div class="slider-value d-flex align-items-center" style="align-items: baseline;">
                       <input
                         type="text"
                         class="form-control me-2"

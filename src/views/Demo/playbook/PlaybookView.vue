@@ -1,8 +1,9 @@
 <template>
-  <PlaybookHeadBar
+  <PlaybookHeadBar1/>
+  <!-- <PlaybookHeadBar
     @importProcess="importProcess"
     @saveProcess="saveProcess"
-  />
+  /> -->
   <div class="playbook-container">
     <div v-if="initialized">
       <contextHolder />
@@ -236,7 +237,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import PlaybookHeadBar from '@/components/PlaybookHeadBar.vue';
+import PlaybookHeadBar1 from '@/components/PlaybookHeadBar1.vue';
 import PlaybookStructure from './PlaybookStructureView.vue';
 import PlaybookDetailView from './PlaybookDetailView.vue';
 import ProEmptyView from '../Creator/ProEmptyView.vue';
@@ -661,23 +662,52 @@ const generateGWConstraint = () => {
   // g: Gate + '(gate.index)'
   // props: Option + 'outPro.index' + ('1..outPro.subPro.length)')
   let gateOutgoings = 'gateOutgoings = [';
-  gateways.value.forEach((gateway, index) => {
+  gateways.value.forEach((gateway, gateIndex) => {
     gateway.outgoingDetails.forEach((outProcess, outIndex) => {
-      outProcess.subProcessArray.forEach((outSub, outSubIndex) => {
-        // gateDependencies part
-        const gd = `(p: Option${outProcess.index + 1}(${outSubIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
-        gateDependencies += gd;
-        if ( index === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1 && outSubIndex === outProcess.subProcessArray.length - 1) {
-          gateDependencies += ']; \n';
-        } else {
-          gateDependencies += ',\n ';
-        }
-      })
+      // -------------------- gateDependencies（范围扩大） --------------------
+      const targetProcessIds = gateway.pathsMap[outProcess.id] || [];
+
+      targetProcessIds.forEach((processId) => {
+        const targetProcess = processData.value.processes.find(p => p.id === processId);
+        console.log('targetProcess:', targetProcess);
+
+        if (!targetProcess || !targetProcess.subProcessArray) return;
+
+        targetProcess.subProcessArray.forEach((sub, subIndex) => {
+          console.log(targetProcess.index)
+          const gd = `(p: Option${targetProcess.index + 1}(${subIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
+          gateDependencies += gd;
+
+          // check if it is the last one
+          const isLastGateway = gateIndex === gateways.value.length - 1;
+          const isLastOut = outIndex === gateway.outgoingDetails.length - 1;
+          const isLastProcess = processId === targetProcessIds[targetProcessIds.length - 1];
+          const isLastSub = subIndex === targetProcess.subProcessArray.length - 1;
+
+          if (isLastGateway && isLastOut && isLastProcess && isLastSub) {
+            gateDependencies += '];\n';
+          } else {
+            gateDependencies += ',\n ';
+          }
+        });
+      });
+
+
+      // outProcess.subProcessArray.forEach((outSub, outSubIndex) => {
+      //   // gateDependencies part
+      //   const gd = `(p: Option${outProcess.index + 1}(${outSubIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
+      //   gateDependencies += gd;
+      //   if ( gateIndex === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1 && outSubIndex === outProcess.subProcessArray.length - 1) {
+      //     gateDependencies += ']; \n';
+      //   } else {
+      //     gateDependencies += ',\n ';
+      //   }
+      // })
       // gateOutgoings part
-      const go = `(g: Gate(${index + 1}), props: Option${outProcess.index + 1}(1..${outProcess.subProcessArray.length}))`;
+      const go = `(g: Gate(${gateIndex + 1}), props: Option${outProcess.index + 1}(1..${outProcess.subProcessArray.length}))`;
       gateOutgoings += go;
-      if ( index === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1) {
-        gateOutgoings += '];';
+      if ( gateIndex === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1) {
+        gateOutgoings += ']; \n';
       } else {
         gateOutgoings += ',\n ';
       }
@@ -718,28 +748,27 @@ const dsReplenish = () => {
       if (subPro.depListArray.length > 0) {
         subPro.depListArray.forEach((depList, depListIndex) => {
           let depDeclare = `(p: Option${proIndex + 1}(${subIndex + 1}), req: [`;
-          const grouped = new Map();
+
+          // collect dependencies for the current subPro
+          let reqOptions = [];
+
           depList.dependencies.forEach((listDep) => {
-            const { process, subPro} = listDep;
-            if (!grouped.has(process)) {
-              grouped.set(process, []);
-            }
-            grouped.get(process).push(subPro);
+            const { process, subPro } = listDep;
+            reqOptions.push(`Option${process}(${subPro + 1})`);
           });
-          grouped.forEach((mapsubPros, mapprocess) => {
-            mapsubPros.forEach((mapsubPro, subProIndex) => {
-              if (subProIndex != mapsubPros.length - 1) {
-                depDeclare += `Option${mapprocess}(${mapsubPro}), `;
-              } else {
-                depDeclare += `Option${mapprocess}(${mapsubPro})])`;
-              }
-            })
-          })
-          if (proIndex == processData.value.processes.length - 1 && subIndex == process.subProcessArray.length - 1 && depListIndex == subPro.depListArray.length - 1) {
-              depTemplate += depDeclare;
-            } else {
-              depTemplate += depDeclare + ', \n';
-            }
+
+          depDeclare += reqOptions.join(', ') + '])';
+
+          // Determine if it is the last one
+          if (
+            proIndex === processData.value.processes.length - 1 &&
+            subIndex === process.subProcessArray.length - 1 &&
+            depListIndex === subPro.depListArray.length - 1
+          ) {
+            depTemplate += depDeclare;
+          } else {
+            depTemplate += depDeclare + ', \n';
+          }
         });
 
       }
@@ -800,7 +829,7 @@ const dsReplenish = () => {
 
 
   // Gateway constraints and data
-  if (processData.value.type === 'Configurator Playbook') {
+  if (gateways.value.length > 0) {
     generateGWConstraint();
     modelString += GWConstraintString;
     dataString += gwDataString.value;
@@ -814,6 +843,7 @@ const dsReplenish = () => {
 const solveModel = async (completeModel, solutionList) => {
   const model = new MiniZinc.Model();
   model.addString(completeModel);
+  console.log('Complete Model:', completeModel);
 
   if (!model) {
     console.error('Model is not loaded yet.');
@@ -1082,87 +1112,87 @@ const nextPage = () => {
 }
 
 // Function to save the model to a JSON file
-const saveProcess = async() => {
-  const data = {
-    process: {
-      type: processData.value.type,
-      processes: processData.value.processes
-    },
-    gateways: gateways.value,
-    events: events.value,
-    processAttr: attributes.value,
-    attributesTemplate: attributeTemplates.value
-  }
-  const dataString = JSON.stringify(data, null, 2);
-  const blob = new Blob([dataString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+// const saveProcess = async() => {
+//   const data = {
+//     process: {
+//       type: processData.value.type,
+//       processes: processData.value.processes
+//     },
+//     gateways: gateways.value,
+//     events: events.value,
+//     processAttr: attributes.value,
+//     attributesTemplate: attributeTemplates.value
+//   }
+//   const dataString = JSON.stringify(data, null, 2);
+//   const blob = new Blob([dataString], { type: 'application/json' });
+//   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'proStructure.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = 'proStructure.json';
+//   document.body.appendChild(a);
+//   a.click();
+//   document.body.removeChild(a);
 
-  URL.revokeObjectURL(url);
-  console.log('Data saved successfully:');
-}
+//   URL.revokeObjectURL(url);
+//   console.log('Data saved successfully:');
+// }
 
 
 
 // Function to import a model from a JSON file
-const importProcess = async(file) => {
-  if (file) {
-    const reader = new FileReader();
+// const importProcess = async(file) => {
+//   if (file) {
+//     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
+//     reader.onload = (e) => {
+//       try {
+//         const importedData = JSON.parse(e.target.result);
 
-        // Check if the imported data has the required properties
-        if (importedData) {
-          // load the imported data into the data variables
-          processData.value = importedData.process;
-          attributes.value = importedData.processAttr;
-          gateways.value = importedData.gateways;
-          events.value = importedData.events;
-          attributeTemplates.value = importedData.attributeTemplate;
+//         // Check if the imported data has the required properties
+//         if (importedData) {
+//           // load the imported data into the data variables
+//           processData.value = importedData.process;
+//           attributes.value = importedData.processAttr;
+//           gateways.value = importedData.gateways;
+//           events.value = importedData.events;
+//           attributeTemplates.value = importedData.attributeTemplate;
 
-          console.log('Data imported successfully:', importedData);
+//           console.log('Data imported successfully:', importedData);
 
-          if (processData.value.processes.length > 0) {
-            selectedProcess.value = processData.value.processes[0];
-            lastProcess.value[0] = 0;
-            currentProcess.value[0] = 0;
-            totalpage.value = [
-              processData.value.processes.length || 0,
-              processData.value.processes[processData.value.processes.length - 1].subProcessArray.length || 0
-            ];
-          } else {
-            totalpage.value = [0, 0];
-          }
-        } else {
-          console.error('JSON file does not contain the required data.');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-      }
-    };
+//           if (processData.value.processes.length > 0) {
+//             selectedProcess.value = processData.value.processes[0];
+//             lastProcess.value[0] = 0;
+//             currentProcess.value[0] = 0;
+//             totalpage.value = [
+//               processData.value.processes.length || 0,
+//               processData.value.processes[processData.value.processes.length - 1].subProcessArray.length || 0
+//             ];
+//           } else {
+//             totalpage.value = [0, 0];
+//           }
+//         } else {
+//           console.error('JSON file does not contain the required data.');
+//         }
+//       } catch (error) {
+//         console.error('Import error:', error);
+//       }
+//     };
 
-    reader.readAsText(file);
+//     reader.readAsText(file);
 
-    // console.log(processData.value);
-    modelString = BasicModelString;
-    dataString = '';
-    attrString = '';
-    gwDataString.value = '';
-    dsReplenish();
-    let completeModel = modelString + dataString;
-    solveModel(completeModel, solutions);
-    choiceArrayCreate();
-    setProcessSolution();
-  }
-};
+//     // console.log(processData.value);
+//     modelString = BasicModelString;
+//     dataString = '';
+//     attrString = '';
+//     gwDataString.value = '';
+//     dsReplenish();
+//     let completeModel = modelString + dataString;
+//     solveModel(completeModel, solutions);
+//     choiceArrayCreate();
+//     setProcessSolution();
+//   }
+// };
 
 // Watch for changes in the processData and update the total page
 watch(processData.value.processes, (newVal) => {
@@ -1204,12 +1234,12 @@ onMounted( async() => {
   setTotalPage();
 
   dsReplenish();
-  let completeModel = modelString + dataString;
-  try {
-    await solveModel(completeModel, solutions);
-  } catch (error) {
-    console.error('Error during solving:', error);
-  }
+  // let completeModel = modelString + dataString;
+  // try {
+  //   await solveModel(completeModel, solutions);
+  // } catch (error) {
+  //   console.error('Error during solving:', error);
+  // }
   choiceArrayCreate();
   setProcessSolution();
 
