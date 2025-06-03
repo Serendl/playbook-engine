@@ -1,9 +1,5 @@
 <template>
   <PlaybookHeadBar1/>
-  <!-- <PlaybookHeadBar
-    @importProcess="importProcess"
-    @saveProcess="saveProcess"
-  /> -->
   <div class="playbook-container">
     <div v-if="initialized">
       <contextHolder />
@@ -324,8 +320,6 @@ const totalpage = ref([0, 0]);
 let initialized = false;
 
 //////////////////////////////Solution and Choices////////////////////////////////////
-// processes
-// const processes = ref([]);
 
 // array to store the choices
 const choices = ref([]);
@@ -574,37 +568,21 @@ const solveDisModel = async(model) => {
     .map(item => item[0]);
 
   const minIndexSet = new Set(minIndexes);
-  // recommendedSolutions.value = customSolutions.value.filter((solution, index) => minIndexSet.has(index));
-  // recommendedSolutions.value = customSolutions.value
-  // .map((solution, index) => ({
-  //   ...solution,
-  //   index, // add index attribute
-  // }))
-  // .filter((solution) => minIndexSet.has(solution.index))
-  // .map((solution) => ({
-  //   ...solution,
-  //   show: false, // add show attribute
-  // }));
   recommendedSolutions.value = customSolutions.value
   .map((solution, index) => {
     const updatedSet = solution.chosen_prop.set.map(prop => {
-      // 原始 OptionX 转为索引
+      // transform 'OptionX' to index
       const optionIndex = parseInt(prop.c.replace('Option', ''));
 
       // capture the sub option name
       const name =
         processData.value.processes?.[optionIndex - 1]?.subProcessArray?.[prop.e - 1]?.name || 'N/A';
-      // 遍历 e 数组，提取每个子选项的名称
-      // const displayNames = Array.isArray(prop.e)
-      //   ? prop.e.map(eIndex => processData.value.processes?.[optionIndex]?.subProcessArray?.[eIndex - 1]?.name || 'N/A')
-      //   : [processData.value.processes?.[optionIndex]?.subProcessArray?.[prop.e - 1]?.name || 'N/A'];
 
 
       return {
         ...prop,
         c: optionIndex,     // set 'OptionX' to index
         displayName: name   // add displayName
-        // displayNames
       };
     });
 
@@ -644,7 +622,6 @@ const setProcessSolution = async () => {
       processSolution.value[optionIndex - 1].add(prop.e);
     })
   })
-  // console.log('setPS', processSolution.value);
 }
 
 // Gateway Data
@@ -692,18 +669,6 @@ const generateGWConstraint = () => {
         });
       });
 
-
-      // outProcess.subProcessArray.forEach((outSub, outSubIndex) => {
-      //   // gateDependencies part
-      //   const gd = `(p: Option${outProcess.index + 1}(${outSubIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
-      //   gateDependencies += gd;
-      //   if ( gateIndex === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1 && outSubIndex === outProcess.subProcessArray.length - 1) {
-      //     gateDependencies += ']; \n';
-      //   } else {
-      //     gateDependencies += ',\n ';
-      //   }
-      // })
-      // gateOutgoings part
       const go = `(g: Gate(${gateIndex + 1}), props: Option${outProcess.index + 1}(1..${outProcess.subProcessArray.length}))`;
       gateOutgoings += go;
       if ( gateIndex === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1) {
@@ -716,8 +681,6 @@ const generateGWConstraint = () => {
 
   gwDataString.value += gateDependencies;
   gwDataString.value += gateOutgoings;
-  // console.log('gwData:', gwDataString.value);
-  // localStorage.setItem('GWConstraint', JSON.stringify(GWConstraint.value));
 }
 
 
@@ -960,7 +923,6 @@ const noSolution = async () => {
   await updateLastChoice(lastChoice.value.option, lastChoice.value.property);
   if (choices.value[lastChoice.value.option].length > processData.value.processes[lastChoice.value.option].choiceNum) {
     messageApi.info(`You can only choose ${processData.value.processes[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
-    // console.log(`You can only choose ${processes.value[lastChoice.value.option].choiceNum} properties in option${lastChoice.value.option + 1}.`);
   } else {
     let dependencyAlert = '';
     let depListAlert = '';
@@ -1037,12 +999,6 @@ const newTempt = () => {
     attrInfo: []
   }
   attributes.value.forEach(attr => {
-    // const newAttribute = {
-    //   attrName: attr.name,
-    //   value: 1,
-    //   valueDesc: ['', '', '', '', ''],
-    //   valueExplan: ['', '', '', '', '']
-    // }
     const newAttribute = {
       attrName: attr.name,
       rangeValue: [1, 5],
@@ -1059,9 +1015,6 @@ const clearDialog = () => {
   newAttrTempt.value.name = '';
   newAttrTempt.value.description = '';
   newAttrTempt.value.attrInfo.forEach(attr => {
-    // attr.value = 1;
-    // attr.valueDesc = ['', '', '', '', ''];
-    // attr.valueExplan = ['', '', '', '', ''];
     attr.rangeValue = [1, 5];
     attr.rangeDesc = '';
     attr.rangeExplan = '';
@@ -1234,12 +1187,6 @@ onMounted( async() => {
   setTotalPage();
 
   dsReplenish();
-  // let completeModel = modelString + dataString;
-  // try {
-  //   await solveModel(completeModel, solutions);
-  // } catch (error) {
-  //   console.error('Error during solving:', error);
-  // }
   choiceArrayCreate();
   setProcessSolution();
 
@@ -1267,13 +1214,9 @@ onMounted( async() => {
 
 .processDetial {
   flex-grow: 1;
-  /* padding: 20px; */
   overflow-y: auto;
-  /* width: 80%; */
-  /* margin-left: 30%; */
   padding: 1px 16px;
   height: 100%;
-  /* padding-top: 20px; */
 }
 
  .page-container {
@@ -1285,7 +1228,6 @@ onMounted( async() => {
 
 .floating-button {
   position: fixed;
-  /* top: 50%; */
   right: 14px;
   transform: translateY(-50%);
   z-index: 9999;

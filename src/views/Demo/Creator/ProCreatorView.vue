@@ -8,6 +8,7 @@
       <div class="left-bar">
         <ProStructure
           :processData="processData"
+          :isLinear="isLinear"
           @expand="expand"
           @addSubProcess="addSubProcess"
           @selectProcess="selectProcess"
@@ -407,13 +408,9 @@ onMounted(async() => {
 
 .processDetial {
   flex-grow: 1;
-  /* padding: 20px; */
   overflow-y: auto;
-  /* width: 80%; */
-  /* margin-left: 30%; */
   padding: 1px 16px;
   height: 100%;
-  /* padding-top: 20px; */
 }
 
  .page-container {

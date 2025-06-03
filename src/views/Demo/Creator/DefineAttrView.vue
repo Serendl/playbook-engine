@@ -8,9 +8,6 @@
       <div class="button-line">
         <div>
           <button @click="visible = true" class="btn btn-primary me-3">Add Option Attribute</button>
-          <!-- <button @click="triggerFileUpload" class="btn btn-primary me-3">Import Model</button> -->
-          <!-- <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" /> -->
-          <!-- <button @click="saveModel" class="btn btn-primary text-end">Save Model</button> -->
         </div>
       </div>
 
@@ -19,8 +16,6 @@
         <div v-for="(process, index) in processData.processes" :key="index" class="process-item">
           <div class="name-delete">
             <div class="id-name-row" style="align-items: baseline;">
-              <!-- <label class="me-2">Process {{ index + 1 }}. </label> -->
-              <!-- <label>Process Name: {{ process.name }}</label> -->
               <label>Process {{ index + 1 }}. {{ process.name }}</label>
               <label class="ms-5">Choice Number Range: </label>
               <input v-model="process.lowChoiceNum" placeholder="Low Choice Number" class="choice-number-input form-control" />
@@ -51,7 +46,7 @@
                     <input v-model="attribute.value" placeholder="Attribute Value" class="form-control attribute-input ms-2" />
                   </div>
                   <div>
-                    <button @click="deleteAttr(index, proIndex, attrIndex)" class="delete-btn ms-2">🗑️</button>
+                    <button @click="deleteAttr(attrIndex)" class="delete-btn ms-2">🗑️</button>
                   </div>
                 </div>
               </div>
@@ -83,10 +78,6 @@
 <script setup>
 import router from '@/router';
 import { ref, onMounted } from 'vue';
-import * as MiniZinc from 'minizinc';
-import GWConstraint from '@/model/Gateconstraint.txt?raw';
-
-const GWConstraintString = GWConstraint;
 
 const visible = ref(false);
 const attrName = ref('');
@@ -99,155 +90,13 @@ const events = ref([]);
 const isLinear = ref('false')
 const attributeTemplates = ref([]);
 
-// const completeData = ref('');
-
-const fileInput = ref(null);
-
-let modelString = 'enum Property;\n' +
-                  'array[Property] of var bool: chosen ::no_output;\n' +
-                  'set of Property: chosen_prop ::output ::output_only = {p | p in Property where fix(chosen[p])};\n' +
-                  'list of record(Property: p, list of Property: req): dependencies;\n' +
-                  'constraint forall(p in Property where length([0 | i in index_set(dependencies) where dependencies[i].p = p]) > 0) (\n' +
-                  '  chosen[p] -> exists(i in index_set(dependencies) where dependencies[i].p = p) (\n' +
-                  '    forall(r in dependencies[i].req) (chosen[r])\n' +
-                  '  )\n' +
-                  ');\n' +
-                  'list of record(set of Property: props, set of int: n): card; \n' +
-                  'constraint forall(i in index_set(card)) (  \n' +
-                  '  count(p in card[i].props)(chosen[p]) in card[i].n  \n' +
-                  '); \n';
-
-let dataString = '';
-
-let attrString = '';
-
-let gwDataString = '';
+// const fileInput = ref(null);
 
 const attributes = ref([]);
-
-const solutions = ref([]);
 
 const getPrefix = (subIndex) => {
   return  'Option' + ' ' + String.fromCharCode(65 + subIndex);
 }
-
-const dsReplenish = () => {
-  // Property = OptionA(1..3) ++ OptionB(1..3) ++ OptionC(1..3);
-  let propTemplate = 'Property = ';
-  processData.value.processes.forEach((process, proIndex) =>{
-    let proDeclare = 'Option';
-    if (proIndex != processData.value.processes.length - 1) {
-      proDeclare += `${proIndex + 1}(1..${process.subProcessArray.length}) ++ `;
-    } else {
-      proDeclare += `${proIndex + 1}(1..${process.subProcessArray.length}); \n`;
-    }
-    propTemplate += proDeclare;
-  })
-
-  dataString += propTemplate;
-
-  // dependencies = [
-  //   (p: OptionC(2), req: [OptionA(1), OptionB(2)]),
-  //   (p: OptionC(1), req: [OptionA(2), OptionB(2)]),
-  //   (p: OptionC(1), req: [OptionA(3), OptionB(3)]),
-  //   (p: OptionC(3), req: [OptionA(3)]),
-  // ];
-  let depTemplate = 'dependencies = [';
-  processData.value.processes.forEach((process, proIndex) => {
-    process.subProcessArray.forEach((subPro, subIndex) => {
-      if (subPro.depListArray.length > 0) {
-        subPro.depListArray.forEach((depList, depListIndex) => {
-          let depDeclare = `(p: Option${proIndex + 1}(${subIndex + 1}), req: [`;
-          const grouped = new Map();
-          depList.dependencies.forEach((listDep) => {
-            const { process, subPro} = listDep;
-            if (!grouped.has(process)) {
-              grouped.set(process, []);
-            }
-            grouped.get(process).push(subPro);
-          });
-          grouped.forEach((mapsubPros, mapprocess) => {
-            mapsubPros.forEach((mapsubPro, subProIndex) => {
-              if (subProIndex != mapsubPros.length - 1) {
-                depDeclare += `Option${mapprocess}(${mapsubPro}), `;
-              } else {
-                depDeclare += `Option${mapprocess}(${mapsubPro})])`;
-              }
-            })
-          })
-          if (proIndex == processData.value.processes.length - 1 && subIndex == process.subProcessArray.length - 1 && depListIndex == subPro.depListArray.length - 1) {
-              depTemplate += depDeclare;
-            } else {
-              depTemplate += depDeclare + ', \n';
-            }
-        });
-
-      }
-    });
-  });
-  depTemplate += '];\n';
-
-  dataString += depTemplate;
-
-  // card = [
-  //   (props: OptionA(1..3), n: 1..1),
-  //   (props: OptionB(1..3), n: 1..1),
-  //   (props: OptionC(1..3), n: 1..1),
-  // ];
-  let cardTemplate = 'card = [';
-  processData.value.processes.forEach((process, proIndex) => {
-    let cardDeclare = `(props: Option${proIndex + 1}(1..${process.subProcessArray.length}), n: ${process.lowChoiceNum}..${process.upChoiceNum})`;
-    if (proIndex == processData.value.processes.length - 1) {
-      cardTemplate += cardDeclare;
-    } else {
-      cardTemplate += cardDeclare + ', \n';
-    }
-  });
-  cardTemplate += '];\n';
-
-  // cost = [80, 45, 50, 40, 15, 60, 40, 250, 100];
-  if (attributes.value.length > 0) {
-    attributes.value.forEach((attribute, attributeIndex) => {
-      let attrDeclare = `${attribute.name} = [`;
-      processData.value.processes.forEach((process, proIndex) => {
-        process.subProcessArray.forEach((subPro, subIndex) => {
-          if(subPro.subAttrArray.length > 0) {
-            subPro.subAttrArray.forEach((attr, attrIndex) => {
-              if (attribute.name === attr.name && attributeIndex === attrIndex) {
-                if (proIndex === processData.value.processes.length - 1 && subIndex == process.subProcessArray.length - 1) {
-                  attrDeclare += `${attr.value}];\n`;
-                } else {
-                  attrDeclare += `${attr.value}, `;
-                }
-              }
-            })
-          }
-        })
-      })
-      attrString += attrDeclare;
-    })
-    let attrDefine = '';
-    attributes.value.forEach((attribute) => {
-      attrDefine += `array[Property] of ${attribute.type}: ${attribute.name};\n`;
-      attrDefine += `${attribute.type}: max${attribute.name} = sum(${attribute.name});\n`
-      attrDefine += `var 0..max${attribute.name}: Total${attribute.name} ::output = sum(p in Property)(chosen[p]*${attribute.name}[p]);\n`
-    })
-    modelString += attrDefine;
-    dataString += attrString;
-  }
-
-  dataString += cardTemplate;
-
-
-  if (processData.value.type === 'Configurator Playbook') {
-    modelString += GWConstraintString;
-    dataString += gwDataString;
-  }
-
-  console.log('Model String:', modelString);
-  console.log('Data String:', dataString);
-};
-
 
 const addAttribute = () => {
   processData.value.processes.forEach(process => {
@@ -426,7 +275,6 @@ const saveProcess = async() => {
 
 onMounted(async() => {
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));
-  const gwDataStorage = JSON.parse(localStorage.getItem('GWConstraint'));
 
   if (processDataStorage) {
     processData.value = processDataStorage.process;
@@ -435,10 +283,6 @@ onMounted(async() => {
     events.value = processDataStorage.events;
     isLinear.value = processDataStorage.linear;
     attributeTemplates.value = processDataStorage.attributeTemplates;
-  }
-
-  if (gwDataStorage) {
-    gwDataString = gwDataStorage;
   }
 });
 </script>

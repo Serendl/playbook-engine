@@ -32,15 +32,6 @@
               </div>
             </div>
             <div class="me-2">
-              <!-- <button @click="deleteProcess(index)" class="delete-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M10 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M14 11V17" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M4 7H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button> -->
               <button @click="openDialog(index)" class="add-subprocess">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 12L12 12M12 12L9 12M12 12L12 9M12 12L12 15" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"/>
@@ -64,7 +55,6 @@
             <div class="d-flex align-items-center subprocess-name">
               <div class="subprocess-line ms-1 mb-1">
                 <div @click="selectSubProcess(index, subIndex)" class="ms-2 process-name">
-                  <!-- {{ index + 1 }}.{{ subIndex + 1 }} {{ subprocess.name }} -->
                   {{ getPrefix(index, subIndex) }} {{ subprocess.name }}
                 </div>
                 <div class="me-2">
@@ -98,6 +88,10 @@ const props = defineProps({
   processData: {
     type: Object,
     required: true
+  },
+  isLinear:{
+    type: Boolean,
+    default: false
   }
 });
 
@@ -116,18 +110,9 @@ const expand = (index) => {
   emit('expand', index);
 }
 
-const deleteProcess = (index) => {
-  emit('deleteProcess', index);
-}
-
 const deleteSubProcess = (index, subIndex) => {
   emit('deleteSubProcess', index, subIndex);
 }
-
-// const addProcess = () => {
-//   emit('addProcess', proName.value);
-//   proName.value = '';
-// }
 
 const openDialog = (index) => {
   currentIndex.value = index;
@@ -164,10 +149,10 @@ const getPrefix = (index, subIndex) => {
 }
 
 const getButtonName = () => {
-  if (props.processData.type === 'Text Playbook') {
+  if (props.isLinear) {
     return 'Complete';
   }
-  if (props.processData.type === 'Configurator Playbook') {
+  if (!props.isLinear) {
     return 'Define Gateway';
   }
 }
@@ -189,7 +174,6 @@ const nextStep = () => {
 
 .process-name-line {
   padding: 10px 0;
-  /* margin-bottom: 10px; */
   border-radius: 5px;
   align-items: baseline;
   width: 100%;
@@ -200,12 +184,9 @@ const nextStep = () => {
 }
 
 .delete-button {
-  /* height: 24px; */
-  /* width: 28px; */
   background-color: transparent;
   border-radius: 8px;
   border-color: grey;
-  /* border: none; */
   cursor: pointer;
 }
 
@@ -226,7 +207,6 @@ const nextStep = () => {
 }
 
 .subprocess-line {
-  /* background-color: rgba(168, 175, 175, 0.333); */
   padding: 5px 0;
   margin: 1px 0;
   border-radius: 5px;

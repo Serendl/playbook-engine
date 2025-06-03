@@ -4,15 +4,6 @@
     <h1>Define Gateway Dependencies</h1>
 
     <div class="content-container">
-      <!-- Add Process Section -->
-      <!-- <div class="button-line">
-        <div>
-          <button @click="triggerFileUpload()" class="btn btn-primary me-3">Import</button>
-          <input type="file" ref="fileInput" @change="importModel" accept=".json" style="display: none;" />
-          <button @click="saveModel()" class="btn btn-primary text-end">Save</button>
-        </div>
-      </div> -->
-
       <div class="generate-process">
 
         <div v-for="(gateway, index) in gateways" :key="index" class="process-item">
@@ -89,119 +80,74 @@ const events = ref([]);
 let isLinear = true;
 const attributeTemplates = ref([]);
 
-const fileInput = ref(null);
-
-const GWConstraint = ref('');
-
-// gateway activity choosen number can be 0
-const generateGWConstraint = () => {
-  // Gateway = Gate(1..1);
-  const gateDefine = `Gateway = Gate(1..${gateways.value.length});`;
-  GWConstraint.value += gateDefine + '\n';
-
-  // gateDependencies = [(p: Option3(3), req: [Option1(3)])];
-  // p: Option + 'outPro.index' + ('outPro.subPro.index')
-  // req: Option + 'selectedPro.index' + ('selectedOption')
-  let gateDependencies = 'gateDependencies = [';
-  // gateOutgoings = [(g: Gate(1), props: Option2(1..3)), (g: Gate(1), props: Option3(1..3))];
-  // g: Gate + '(gate.index)'
-  // props: Option + 'outPro.index' + ('1..outPro.subPro.length)')
-  let gateOutgoings = 'gateOutgoings = [';
-  gateways.value.forEach((gateway, index) => {
-    gateway.outgoingDetails.forEach((outProcess, outIndex) => {
-      outProcess.subProcessArray.forEach((outSub, outSubIndex) => {
-        // gateDependencies part
-        const gd = `(p: Option${outProcess.index + 1}(${outSubIndex + 1}), req: [Option${outProcess.selectedPro.index + 1}(${outProcess.selectedOption})])`;
-        gateDependencies += gd;
-        if ( index === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1 && outSubIndex === outProcess.subProcessArray.length - 1) {
-          gateDependencies += ']; \n';
-        } else {
-          gateDependencies += ',\n ';
-        }
-      })
-      // gateOutgoings part
-      const go = `(g: Gate(${index + 1}), props: Option${outProcess.index + 1}(1..${outProcess.subProcessArray.length}))`;
-      gateOutgoings += go;
-      if ( index === gateways.value.length - 1 && outIndex === gateway.outgoingDetails.length - 1) {
-        gateOutgoings += '];';
-      } else {
-        gateOutgoings += ',\n ';
-      }
-    })
-  })
-
-  GWConstraint.value += gateDependencies;
-  GWConstraint.value += gateOutgoings;
-  console.log('GWConstraint:', GWConstraint.value);
-  localStorage.setItem('GWConstraint', JSON.stringify(GWConstraint.value));
-}
+// const fileInput = ref(null);
 
 const getPrefix = (index) => {
   return  'Subsequent' + ' ' + (index + 1);
 }
 
 // Function to save the model to a JSON file
-const saveModel = async() => {
-  const data = {
-      process: {
-        type: processData.value.type,
-        processes: processData.value.processes
-      },
-      gateways: gateways.value,
-      events: events.value,
-      processAttr: attributes.value,
-      linear: isLinear,
-      attributeTemplates: attributeTemplates.value
-    }
-  const dataString = JSON.stringify(data, null, 2);
-  const blob = new Blob([dataString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+// const saveModel = async() => {
+//   const data = {
+//       process: {
+//         type: processData.value.type,
+//         processes: processData.value.processes
+//       },
+//       gateways: gateways.value,
+//       events: events.value,
+//       processAttr: attributes.value,
+//       linear: isLinear,
+//       attributeTemplates: attributeTemplates.value
+//     }
+//   const dataString = JSON.stringify(data, null, 2);
+//   const blob = new Blob([dataString], { type: 'application/json' });
+//   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'DefineGateway.json';
-  a.click();
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = 'DefineGateway.json';
+//   a.click();
 
-  URL.revokeObjectURL(url);
-};
+//   URL.revokeObjectURL(url);
+// };
 
-const triggerFileUpload = () => {
-  fileInput.value.click();
-};
+// const triggerFileUpload = () => {
+//   fileInput.value.click();
+// };
 
 // Function to import a model from a JSON file
-const importModel = (event) => {
-  const file = event.target.files[0];
+// const importModel = (event) => {
+//   const file = event.target.files[0];
 
-  if (file) {
-    const reader = new FileReader();
+//   if (file) {
+//     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
+//     reader.onload = (e) => {
+//       try {
+//         const importedData = JSON.parse(e.target.result);
 
-        // Check if the imported data has the required properties
-        if (importedData) {
-          // load the imported data into the data variables
-          processData.value = importedData.process;
-          attributes.value = importedData.processAttr;
-          gateways.value = importedData.gateways;
-          events.value = importedData.events;
-          isLinear = importedData.linear;
-          attributeTemplates.value = importedData.attributeTemplates;
+//         // Check if the imported data has the required properties
+//         if (importedData) {
+//           // load the imported data into the data variables
+//           processData.value = importedData.process;
+//           attributes.value = importedData.processAttr;
+//           gateways.value = importedData.gateways;
+//           events.value = importedData.events;
+//           isLinear = importedData.linear;
+//           attributeTemplates.value = importedData.attributeTemplates;
 
-          console.log('Data improted successfully:', importedData);
-        } else {
-          console.error('JSON file does not contain the required data.');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-      }
-    };
+//           console.log('Data improted successfully:', importedData);
+//         } else {
+//           console.error('JSON file does not contain the required data.');
+//         }
+//       } catch (error) {
+//         console.error('Import error:', error);
+//       }
+//     };
 
-    reader.readAsText(file);
-  }
-};
+//     reader.readAsText(file);
+//   }
+// };
 
 
 // Go to the next step
