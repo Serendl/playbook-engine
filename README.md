@@ -5,7 +5,7 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
-Please start from http://localhost:5173/ProBPMN.
+After setup, please start from the ProBPMN page (http://localhost:5173/ProBPMN).
 
 ## Recommended IDE Setup
 
