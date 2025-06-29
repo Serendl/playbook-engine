@@ -24,11 +24,11 @@ import DefineGatewayView from '@/views/Demo/Creator/DefineGatewayView.vue'
 import AttrTemplateView from '@/views/Demo/Creator/AttrTemplateView.vue'
 
 const routes = [
-  // {
-  //   path: '/',
-  //   name: 'Home',
-  //   component: HomeView
-  // },
+  {
+    path: '/',
+    name: 'Home',
+    component: HomeView
+  },
   {
     path: '/ProDeclare',
     name: 'ProDeclare',

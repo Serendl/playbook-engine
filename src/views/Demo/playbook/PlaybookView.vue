@@ -641,7 +641,7 @@ const generateGWConstraint = () => {
   let gateOutgoings = 'gateOutgoings = [';
   gateways.value.forEach((gateway, gateIndex) => {
     gateway.outgoingDetails.forEach((outProcess, outIndex) => {
-      // -------------------- gateDependencies（范围扩大） --------------------
+      // -------------------- gateDependencies（expand range） --------------------
       const targetProcessIds = gateway.pathsMap[outProcess.id] || [];
 
       targetProcessIds.forEach((processId) => {
