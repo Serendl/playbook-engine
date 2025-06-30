@@ -240,7 +240,8 @@ import ProEmptyView from '../Creator/ProEmptyView.vue';
 import GWConstraint from '@/model/Gateconstraint.txt?raw';
 import BasicModelString from '@/model/BasicModelString.txt?raw';
 import ChoiceConstraint from '@/model/ChoiceConstraint.txt?raw';
-import * as MiniZinc from 'minizinc';
+// import * as MiniZinc from 'minizinc';
+import { init, Model } from 'https://cdn.jsdelivr.net/npm/minizinc/dist/minizinc.mjs'
 import { FileImageOutlined, SettingOutlined, PlusCircleOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 const [messageApi, contextHolder] = message.useMessage();
@@ -804,7 +805,8 @@ const dsReplenish = () => {
 
 
 const solveModel = async (completeModel, solutionList) => {
-  const model = new MiniZinc.Model();
+  // const model = new MiniZinc.Model();
+  const model = new Model()
   model.addString(completeModel);
   console.log('Complete Model:', completeModel);
 
@@ -1160,6 +1162,12 @@ watch(processData.value.processes, (newVal) => {
 }, { deep: true });
 
 onMounted( async() => {
+  await init({
+    workerURL: 'https://cdn.jsdelivr.net/npm/minizinc/dist/minizinc-worker.js',
+    wasmURL: 'https://cdn.jsdelivr.net/npm/minizinc/dist/minizinc.wasm',
+    dataURL: 'https://cdn.jsdelivr.net/npm/minizinc/dist/minizinc.data'
+  })
+
   const typeStorage = JSON.parse(localStorage.getItem('type'));
   if (typeStorage) {
     processData.value.type = typeStorage;
