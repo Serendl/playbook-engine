@@ -225,14 +225,14 @@ onMounted(async() => {
     // } else {
     //   attrTemplates.value = [];
     // }
-    initialized = true;
+    // initialized = true;
   }
 
 
 })
 
 const addTemplate = () => {
-  initialized = false;
+  // initialized = false;
   const template = {
     id: attributeTemplates.value.length + 1,
     name: '',
@@ -256,7 +256,7 @@ const addTemplate = () => {
     template.attrInfo.push(newAttribute);
   })
   attributeTemplates.value.push(template);
-  initialized = true;
+  // initialized = true;
 }
 
 const deleteTemplate = (index) => {
