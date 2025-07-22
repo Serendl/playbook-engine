@@ -117,11 +117,11 @@ const gateways = ref([]);
 const events = ref([]);
 let isLinear = true;
 
-let initialized = false;
+// let initialized = false;
 
 const attributeTemplates = ref([]);
 
-const fileInput = ref(null);
+// const fileInput = ref(null);
 
 const expand = (index) => {
   attributeTemplates.value[index].show = !attributeTemplates.value[index].show;
@@ -136,7 +136,7 @@ const saveModel = async() => {
     gateways: gateways.value,
     events: events.value,
     processAttr: attributes.value,
-    linear: isLinear.value,
+    linear: isLinear,
     attributeTemplates: attributeTemplates.value
   }
   const dataString = JSON.stringify(data, null, 2);
@@ -171,45 +171,45 @@ const saveProcess = async() => {
   console.log(1);
 };
 
-const triggerFileUpload = () => {
-  fileInput.value.click();
-};
+// const triggerFileUpload = () => {
+//   fileInput.value.click();
+// };
 
 // // Function to import a model from a JSON file
-const importModel = (event) => {
-  const file = event.target.files[0];
+// const importModel = (event) => {
+//   const file = event.target.files[0];
 
-  if (file) {
-    const reader = new FileReader();
+//   if (file) {
+//     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
+//     reader.onload = (e) => {
+//       try {
+//         const importedData = JSON.parse(e.target.result);
 
-        // Check if the imported data has the required properties
-        if (
-          importedData
-        ) {
-          // load the imported data into the data variables
-          processData.value = importedData.process;
-          attributes.value = importedData.processAttr;
-          gateways.value = importedData.gateways;
-          events.value = importedData.events;
-          isLinear.value = importedData.linear;
-          attributeTemplates.value = importedData.attributeTemplates;
+//         // Check if the imported data has the required properties
+//         if (
+//           importedData
+//         ) {
+//           // load the imported data into the data variables
+//           processData.value = importedData.process;
+//           attributes.value = importedData.processAttr;
+//           gateways.value = importedData.gateways;
+//           events.value = importedData.events;
+//           isLinear = importedData.linear;
+//           attributeTemplates.value = importedData.attributeTemplates;
 
-          console.log('Data improted successfully:', importedData);
-        } else {
-          console.error('JSON file does not contain the required data.');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-      }
-    };
+//           console.log('Data improted successfully:', importedData);
+//         } else {
+//           console.error('JSON file does not contain the required data.');
+//         }
+//       } catch (error) {
+//         console.error('Import error:', error);
+//       }
+//     };
 
-    reader.readAsText(file);
-  }
-};
+//     reader.readAsText(file);
+//   }
+// };
 
 onMounted(async() => {
   const processDataStorage = JSON.parse(localStorage.getItem('processData'));

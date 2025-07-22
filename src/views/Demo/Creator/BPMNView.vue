@@ -143,7 +143,7 @@ function generateProcess() {
         pathsMap: {}
       }
       gatewayMap[el.id] = gateWayBase
-      isLinear = 'false';
+      isLinear = false;
     } else if(el.$type === 'bpmn:StartEvent' || el.$type === 'bpmn:EndEvent') {
       const seEventBase = {
         id: el.id,
